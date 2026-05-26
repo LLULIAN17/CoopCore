@@ -1,0 +1,36 @@
+# Local secrets
+api/.env
+api/.env.*
+
+# SQL Server and local connection helpers
+*.sqlproj.user
+*.dbmdl
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
+
+# Environment and local settings
+.env
+.env.*
+local.settings.json
+
+# Logs
+*.log
+logs/
+
+# Dependency folders
+node_modules/
+
+# Build artifacts and binaries
+bin/
+obj/
+dist/
+build/
+*.exe
+*.dll
+*.pdb
+
+# OS files
+.DS_Store
+Thumbs.db
