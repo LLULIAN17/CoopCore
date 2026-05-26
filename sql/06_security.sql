@@ -3,8 +3,7 @@
   Archivo: 06_security.sql
   Fase: Control de acceso (Tema 1)
   Objetivo: Definir principales y permisos de seguridad.
-  Nota: En este prompt se crean principales y membresias.
-  Nota: Los permisos GRANT/DENY se agregan en el Prompt 6.
+  Nota: Incluye principales (Prompt 4) y permisos (Prompt 6).
 */
 
 IF DB_ID(N'CoopCoreDB') IS NULL
@@ -366,5 +365,188 @@ END
 ELSE
 BEGIN
     PRINT N'Membresia ya existe: coop_api_user -> rol_api_coop';
+END;
+GO
+
+/* =========================
+   BLOQUE 5: PERMISOS POR ROL (PROMPT 6)
+   ========================= */
+
+-- Verificacion rapida de roles esperados.
+IF DATABASE_PRINCIPAL_ID(N'rol_admin_coop') IS NULL
+    THROW 51010, 'No existe el rol rol_admin_coop.', 1;
+IF DATABASE_PRINCIPAL_ID(N'rol_cajero_coop') IS NULL
+    THROW 51011, 'No existe el rol rol_cajero_coop.', 1;
+IF DATABASE_PRINCIPAL_ID(N'rol_oficial_credito_coop') IS NULL
+    THROW 51012, 'No existe el rol rol_oficial_credito_coop.', 1;
+IF DATABASE_PRINCIPAL_ID(N'rol_auditor_coop') IS NULL
+    THROW 51013, 'No existe el rol rol_auditor_coop.', 1;
+IF DATABASE_PRINCIPAL_ID(N'rol_api_coop') IS NULL
+    THROW 51014, 'No existe el rol rol_api_coop.', 1;
+GO
+
+/* -------------------------------------
+   ADMINISTRADOR
+   - EXECUTE sobre SPs base
+   - SELECT sobre vistas y catalogos
+   ------------------------------------- */
+IF OBJECT_ID(N'coop.sp_ConsultarSaldo', N'P') IS NOT NULL
+    GRANT EXECUTE ON OBJECT::coop.sp_ConsultarSaldo TO rol_admin_coop;
+IF OBJECT_ID(N'coop.sp_ConsultarMovimientos', N'P') IS NOT NULL
+    GRANT EXECUTE ON OBJECT::coop.sp_ConsultarMovimientos TO rol_admin_coop;
+IF OBJECT_ID(N'coop.sp_RegistrarSocio', N'P') IS NOT NULL
+    GRANT EXECUTE ON OBJECT::coop.sp_RegistrarSocio TO rol_admin_coop;
+IF OBJECT_ID(N'coop.sp_CrearCuenta', N'P') IS NOT NULL
+    GRANT EXECUTE ON OBJECT::coop.sp_CrearCuenta TO rol_admin_coop;
+IF OBJECT_ID(N'coop.sp_ConsultarPrestamo', N'P') IS NOT NULL
+    GRANT EXECUTE ON OBJECT::coop.sp_ConsultarPrestamo TO rol_admin_coop;
+
+IF OBJECT_ID(N'coop.vw_CuentasResumen', N'V') IS NOT NULL
+    GRANT SELECT ON OBJECT::coop.vw_CuentasResumen TO rol_admin_coop;
+IF OBJECT_ID(N'coop.vw_MovimientosAuditoria', N'V') IS NOT NULL
+    GRANT SELECT ON OBJECT::coop.vw_MovimientosAuditoria TO rol_admin_coop;
+IF OBJECT_ID(N'coop.vw_PrestamosResumen', N'V') IS NOT NULL
+    GRANT SELECT ON OBJECT::coop.vw_PrestamosResumen TO rol_admin_coop;
+IF OBJECT_ID(N'coop.vw_SociosConsulta', N'V') IS NOT NULL
+    GRANT SELECT ON OBJECT::coop.vw_SociosConsulta TO rol_admin_coop;
+
+IF OBJECT_ID(N'coop.Rol', N'U') IS NOT NULL
+    GRANT SELECT ON OBJECT::coop.Rol TO rol_admin_coop;
+IF OBJECT_ID(N'coop.ProductoFinanciero', N'U') IS NOT NULL
+    GRANT SELECT ON OBJECT::coop.ProductoFinanciero TO rol_admin_coop;
+GO
+
+/* -------------------------------------
+   CAJERO
+   - EXECUTE sobre SPs de caja
+   - SELECT sobre vistas operativas de caja
+   - DENY DELETE sobre esquema
+   ------------------------------------- */
+IF OBJECT_ID(N'coop.sp_ConsultarSaldo', N'P') IS NOT NULL
+    GRANT EXECUTE ON OBJECT::coop.sp_ConsultarSaldo TO rol_cajero_coop;
+IF OBJECT_ID(N'coop.sp_ConsultarMovimientos', N'P') IS NOT NULL
+    GRANT EXECUTE ON OBJECT::coop.sp_ConsultarMovimientos TO rol_cajero_coop;
+IF OBJECT_ID(N'coop.sp_RegistrarSocio', N'P') IS NOT NULL
+    GRANT EXECUTE ON OBJECT::coop.sp_RegistrarSocio TO rol_cajero_coop;
+IF OBJECT_ID(N'coop.sp_CrearCuenta', N'P') IS NOT NULL
+    GRANT EXECUTE ON OBJECT::coop.sp_CrearCuenta TO rol_cajero_coop;
+
+IF OBJECT_ID(N'coop.vw_CuentasResumen', N'V') IS NOT NULL
+    GRANT SELECT ON OBJECT::coop.vw_CuentasResumen TO rol_cajero_coop;
+IF OBJECT_ID(N'coop.vw_MovimientosAuditoria', N'V') IS NOT NULL
+    GRANT SELECT ON OBJECT::coop.vw_MovimientosAuditoria TO rol_cajero_coop;
+
+DENY DELETE ON SCHEMA::coop TO rol_cajero_coop;
+GO
+
+/* -------------------------------------
+   OFICIAL DE CREDITO
+   - EXECUTE sobre SPs de prestamos
+   - SELECT sobre resumen de prestamos
+   ------------------------------------- */
+IF OBJECT_ID(N'coop.sp_ConsultarPrestamo', N'P') IS NOT NULL
+    GRANT EXECUTE ON OBJECT::coop.sp_ConsultarPrestamo TO rol_oficial_credito_coop;
+
+IF OBJECT_ID(N'coop.vw_PrestamosResumen', N'V') IS NOT NULL
+    GRANT SELECT ON OBJECT::coop.vw_PrestamosResumen TO rol_oficial_credito_coop;
+GO
+
+/* -------------------------------------
+   AUDITOR
+   - SELECT sobre vistas/reportes
+   - DENY de escritura sobre esquema
+   ------------------------------------- */
+IF OBJECT_ID(N'coop.vw_CuentasResumen', N'V') IS NOT NULL
+    GRANT SELECT ON OBJECT::coop.vw_CuentasResumen TO rol_auditor_coop;
+IF OBJECT_ID(N'coop.vw_MovimientosAuditoria', N'V') IS NOT NULL
+    GRANT SELECT ON OBJECT::coop.vw_MovimientosAuditoria TO rol_auditor_coop;
+IF OBJECT_ID(N'coop.vw_PrestamosResumen', N'V') IS NOT NULL
+    GRANT SELECT ON OBJECT::coop.vw_PrestamosResumen TO rol_auditor_coop;
+IF OBJECT_ID(N'coop.vw_SociosConsulta', N'V') IS NOT NULL
+    GRANT SELECT ON OBJECT::coop.vw_SociosConsulta TO rol_auditor_coop;
+
+DENY INSERT ON SCHEMA::coop TO rol_auditor_coop;
+DENY UPDATE ON SCHEMA::coop TO rol_auditor_coop;
+DENY DELETE ON SCHEMA::coop TO rol_auditor_coop;
+GO
+
+/* -------------------------------------
+   API
+   - EXECUTE sobre esquema
+   - DENY de acceso directo a datos
+   ------------------------------------- */
+GRANT EXECUTE ON SCHEMA::coop TO rol_api_coop;
+DENY SELECT ON SCHEMA::coop TO rol_api_coop;
+DENY INSERT ON SCHEMA::coop TO rol_api_coop;
+DENY UPDATE ON SCHEMA::coop TO rol_api_coop;
+DENY DELETE ON SCHEMA::coop TO rol_api_coop;
+GO
+
+/* -------------------------------------
+   PROTECCION DE TABLAS BASE
+   - Los roles de consulta trabajan por vistas
+   - Las operaciones se canalizan por SPs
+   ------------------------------------- */
+IF OBJECT_ID(N'coop.Socio', N'U') IS NOT NULL
+BEGIN
+    DENY SELECT ON OBJECT::coop.Socio TO rol_cajero_coop;
+    DENY SELECT ON OBJECT::coop.Socio TO rol_oficial_credito_coop;
+    DENY SELECT ON OBJECT::coop.Socio TO rol_auditor_coop;
+END;
+
+IF OBJECT_ID(N'coop.Empleado', N'U') IS NOT NULL
+BEGIN
+    DENY SELECT ON OBJECT::coop.Empleado TO rol_cajero_coop;
+    DENY SELECT ON OBJECT::coop.Empleado TO rol_oficial_credito_coop;
+    DENY SELECT ON OBJECT::coop.Empleado TO rol_auditor_coop;
+END;
+
+IF OBJECT_ID(N'coop.Rol', N'U') IS NOT NULL
+BEGIN
+    DENY SELECT ON OBJECT::coop.Rol TO rol_cajero_coop;
+    DENY SELECT ON OBJECT::coop.Rol TO rol_oficial_credito_coop;
+    DENY SELECT ON OBJECT::coop.Rol TO rol_auditor_coop;
+END;
+
+IF OBJECT_ID(N'coop.ProductoFinanciero', N'U') IS NOT NULL
+BEGIN
+    DENY SELECT ON OBJECT::coop.ProductoFinanciero TO rol_cajero_coop;
+    DENY SELECT ON OBJECT::coop.ProductoFinanciero TO rol_oficial_credito_coop;
+    DENY SELECT ON OBJECT::coop.ProductoFinanciero TO rol_auditor_coop;
+END;
+
+IF OBJECT_ID(N'coop.Cuenta', N'U') IS NOT NULL
+BEGIN
+    DENY SELECT ON OBJECT::coop.Cuenta TO rol_cajero_coop;
+    DENY SELECT ON OBJECT::coop.Cuenta TO rol_oficial_credito_coop;
+    DENY SELECT ON OBJECT::coop.Cuenta TO rol_auditor_coop;
+END;
+
+IF OBJECT_ID(N'coop.Movimiento', N'U') IS NOT NULL
+BEGIN
+    DENY SELECT ON OBJECT::coop.Movimiento TO rol_cajero_coop;
+    DENY SELECT ON OBJECT::coop.Movimiento TO rol_oficial_credito_coop;
+    DENY SELECT ON OBJECT::coop.Movimiento TO rol_auditor_coop;
+END;
+
+IF OBJECT_ID(N'coop.Prestamo', N'U') IS NOT NULL
+BEGIN
+    DENY SELECT ON OBJECT::coop.Prestamo TO rol_cajero_coop;
+    DENY SELECT ON OBJECT::coop.Prestamo TO rol_oficial_credito_coop;
+    DENY SELECT ON OBJECT::coop.Prestamo TO rol_auditor_coop;
+END;
+
+IF OBJECT_ID(N'coop.Cuota', N'U') IS NOT NULL
+BEGIN
+    DENY SELECT ON OBJECT::coop.Cuota TO rol_cajero_coop;
+    DENY SELECT ON OBJECT::coop.Cuota TO rol_oficial_credito_coop;
+    DENY SELECT ON OBJECT::coop.Cuota TO rol_auditor_coop;
+END;
+
+IF OBJECT_ID(N'coop.Auditoria', N'U') IS NOT NULL
+BEGIN
+    DENY SELECT ON OBJECT::coop.Auditoria TO rol_cajero_coop;
+    DENY SELECT ON OBJECT::coop.Auditoria TO rol_oficial_credito_coop;
+    DENY SELECT ON OBJECT::coop.Auditoria TO rol_auditor_coop;
 END;
 GO
