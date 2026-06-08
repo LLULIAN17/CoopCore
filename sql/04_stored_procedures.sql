@@ -859,3 +859,89 @@ BEGIN
     END CATCH;
 END;
 GO
+
+/* ============================================================
+   SP 9: Consultar eventos de auditoria
+   Proposito:
+   - Consultar la bitacora con filtros opcionales por fecha, entidad,
+     accion y empleado.
+   Parametros:
+   - @FechaInicio y @FechaFin: rango inclusivo de fechas.
+   - @Entidad: entidad auditada.
+   - @Accion: tipo de evento.
+   - @CedulaEmpleado: empleado asociado al evento.
+   Resultado:
+   - Eventos coincidentes ordenados del mas reciente al mas antiguo.
+   ============================================================ */
+CREATE OR ALTER PROCEDURE coop.sp_ConsultarAuditoria
+    @FechaInicio DATETIME2 = NULL,
+    @FechaFin DATETIME2 = NULL,
+    @Entidad NVARCHAR(100) = NULL,
+    @Accion NVARCHAR(30) = NULL,
+    @CedulaEmpleado NVARCHAR(20) = NULL
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    BEGIN TRY
+        IF @FechaInicio IS NOT NULL
+           AND @FechaFin IS NOT NULL
+           AND @FechaInicio > @FechaFin
+        BEGIN
+            THROW 52080, '@FechaInicio no puede ser mayor que @FechaFin.', 1;
+        END;
+
+        SET @Entidad = NULLIF(LTRIM(RTRIM(@Entidad)), N'');
+        SET @Accion = NULLIF(LTRIM(RTRIM(@Accion)), N'');
+        SET @CedulaEmpleado = NULLIF(LTRIM(RTRIM(@CedulaEmpleado)), N'');
+
+        DECLARE @EmpleadoFiltroID INT = NULL;
+
+        IF @CedulaEmpleado IS NOT NULL
+        BEGIN
+            SELECT @EmpleadoFiltroID = e.EmpleadoID
+            FROM coop.Empleado AS e
+            WHERE e.Cedula = @CedulaEmpleado;
+
+            IF @EmpleadoFiltroID IS NULL
+            BEGIN
+                THROW 52081, 'No existe empleado con la cedula indicada.', 1;
+            END;
+        END;
+
+        SELECT
+            a.AuditoriaID,
+            a.FechaEvento,
+            a.Entidad,
+            a.EntidadID,
+            a.Accion,
+            a.Descripcion,
+            a.UsuarioSQL,
+            a.UsuarioBD,
+            e.Cedula AS CedulaEmpleado,
+            CASE
+                WHEN e.EmpleadoID IS NOT NULL
+                THEN e.Nombre + N' ' + e.Apellido
+                ELSE NULL
+            END AS NombreEmpleado
+        FROM coop.Auditoria AS a
+        LEFT JOIN coop.Empleado AS e
+            ON e.EmpleadoID = a.EmpleadoID
+        WHERE (@FechaInicio IS NULL OR a.FechaEvento >= @FechaInicio)
+          AND (@FechaFin IS NULL OR a.FechaEvento <= @FechaFin)
+          AND (@Entidad IS NULL OR a.Entidad = @Entidad)
+          AND (@Accion IS NULL OR a.Accion = @Accion)
+          AND
+          (
+              @EmpleadoFiltroID IS NULL
+              OR a.EmpleadoID = @EmpleadoFiltroID
+          )
+        ORDER BY a.FechaEvento DESC, a.AuditoriaID DESC;
+    END TRY
+    BEGIN CATCH
+        DECLARE @ErrMsgAuditoria NVARCHAR(4000) =
+            N'sp_ConsultarAuditoria: ' + ERROR_MESSAGE();
+        THROW 52063, @ErrMsgAuditoria, 1;
+    END CATCH;
+END;
+GO

@@ -586,3 +586,22 @@ BEGIN
     GRANT EXECUTE ON OBJECT::coop.sp_CambiarPassword TO rol_auditor_coop;
 END;
 GO
+
+/* -------------------------------------
+   CONSULTA DE AUDITORIA
+   - SP funcional para administrador y auditor
+   ------------------------------------- */
+IF OBJECT_ID(N'coop.sp_ConsultarAuditoria', N'P') IS NOT NULL
+BEGIN
+    GRANT EXECUTE ON OBJECT::coop.sp_ConsultarAuditoria TO rol_admin_coop;
+    GRANT EXECUTE ON OBJECT::coop.sp_ConsultarAuditoria TO rol_auditor_coop;
+END;
+GO
+
+-- NOTA: Los GRANT EXECUTE de los 8 SPs en sql/05_transactions.sql
+-- (sp_RegistrarDeposito, sp_RegistrarRetiro, sp_RegistrarTransferencia,
+-- sp_PagarCuota, sp_SolicitarPrestamo, sp_AprobarPrestamo,
+-- sp_RechazarPrestamo y sp_GenerarAmortizacion) NO se conceden en este
+-- entregable porque esos SPs estan en version inicial y solo lanzan
+-- THROW 52099. Los permisos se concederan en la Fase de Transacciones
+-- cuando esten completamente implementados.
