@@ -15,6 +15,16 @@ GO
 USE CoopCoreDB;
 GO
 
+-- Opciones requeridas para modificar tablas que tienen indices filtrados.
+SET ANSI_NULLS ON;
+SET QUOTED_IDENTIFIER ON;
+SET ANSI_PADDING ON;
+SET ANSI_WARNINGS ON;
+SET ARITHABORT ON;
+SET CONCAT_NULL_YIELDS_NULL ON;
+SET NUMERIC_ROUNDABORT OFF;
+GO
+
 IF SCHEMA_ID(N'coop') IS NULL
 BEGIN
     THROW 51002, 'No existe el esquema coop. Ejecute primero sql/01_schema_tables.sql.', 1;
@@ -47,6 +57,13 @@ WHEN NOT MATCHED BY TARGET THEN
     VALUES (src.NombreRol, src.Descripcion, src.Estado);
 GO
 
+-- ============================================================
+-- ATENCION: PASSWORDS DE LABORATORIO
+-- Los hashes de abajo son LITERALES (no generados al vuelo) para que el
+-- seed sea reproducible. Las contrasenas en texto plano estan documentadas
+-- en docs/manual_tecnico.md y SOLO sirven en ambiente academico.
+-- NO USAR EN PRODUCCION.
+-- ============================================================
 -- Empleados de prueba.
 ;WITH src AS
 (
@@ -58,13 +75,53 @@ GO
         v.Telefono,
         r.RolID,
         v.Estado,
-        v.FechaIngreso
+        v.FechaIngreso,
+        v.NombreUsuario,
+        v.PasswordHash,
+        v.PasswordSalt
     FROM (VALUES
-        (N'EM-0101', N'Maria',  N'Rojas',    N'maria.rojas@coopcore.lab',  N'7000-0101', N'CAJERO_APP',          N'ACTIVO', CAST('2024-01-10T08:00:00' AS DATETIME2)),
-        (N'EM-0102', N'Carlos', N'Mena',     N'carlos.mena@coopcore.lab',  N'7000-0102', N'OFICIAL_CREDITO_APP', N'ACTIVO', CAST('2024-01-11T08:00:00' AS DATETIME2)),
-        (N'EM-0103', N'Andrea', N'Solis',    N'andrea.solis@coopcore.lab', N'7000-0103', N'AUDITOR_APP',         N'ACTIVO', CAST('2024-01-12T08:00:00' AS DATETIME2)),
-        (N'EM-0104', N'Luis',   N'Porras',   N'luis.porras@coopcore.lab',  N'7000-0104', N'ADMIN_APP',           N'ACTIVO', CAST('2024-01-13T08:00:00' AS DATETIME2))
-    ) AS v (Cedula, Nombre, Apellido, Correo, Telefono, NombreRol, Estado, FechaIngreso)
+        (
+            N'EM-0101', N'Maria', N'Rojas', N'maria.rojas@coopcore.lab',
+            N'7000-0101', N'CAJERO_APP', N'ACTIVO',
+            CAST('2024-01-10T08:00:00' AS DATETIME2), N'mlrojas',
+            0x190DCDC8D4AE97097176545B77DDD33F789241FAB35BD9BE52883C505CE57925,
+            0x1A2B3C4D5E6F708192A3B4C5D6E7F80910111213141516171819202122232425
+        ),
+        (
+            N'EM-0102', N'Carlos', N'Mena', N'carlos.mena@coopcore.lab',
+            N'7000-0102', N'OFICIAL_CREDITO_APP', N'ACTIVO',
+            CAST('2024-01-11T08:00:00' AS DATETIME2), N'cmena',
+            0xAADACD201C304D85B67003AC83977CE8D650D9BF08DF60810C3043DDCBCA3F9D,
+            0x2B3C4D5E6F708192A3B4C5D6E7F8091011121314151617181920212223242526
+        ),
+        (
+            N'EM-0103', N'Andrea', N'Solis', N'andrea.solis@coopcore.lab',
+            N'7000-0103', N'AUDITOR_APP', N'ACTIVO',
+            CAST('2024-01-12T08:00:00' AS DATETIME2), N'asolis',
+            0x90A78C43790F25C35B8DF14C67C7B3F7AE51D3273C6260198B3EA52B4A52EAD7,
+            0x3C4D5E6F708192A3B4C5D6E7F809101112131415161718192021222324252627
+        ),
+        (
+            N'EM-0104', N'Luis', N'Porras', N'luis.porras@coopcore.lab',
+            N'7000-0104', N'ADMIN_APP', N'ACTIVO',
+            CAST('2024-01-13T08:00:00' AS DATETIME2), N'lporras',
+            0x9B954E0E7781B97D13D9E86D0ED79CE06D0B7F83939285E3B68D981C58B25524,
+            0x4D5E6F708192A3B4C5D6E7F80910111213141516171819202122232425262728
+        )
+    ) AS v
+    (
+        Cedula,
+        Nombre,
+        Apellido,
+        Correo,
+        Telefono,
+        NombreRol,
+        Estado,
+        FechaIngreso,
+        NombreUsuario,
+        PasswordHash,
+        PasswordSalt
+    )
     INNER JOIN coop.Rol AS r
         ON r.NombreRol = v.NombreRol
 )
@@ -79,10 +136,39 @@ WHEN MATCHED THEN
         tgt.Telefono = src.Telefono,
         tgt.RolID = src.RolID,
         tgt.Estado = src.Estado,
-        tgt.FechaIngreso = src.FechaIngreso
+        tgt.FechaIngreso = src.FechaIngreso,
+        tgt.NombreUsuario = src.NombreUsuario,
+        tgt.PasswordHash = src.PasswordHash,
+        tgt.PasswordSalt = src.PasswordSalt
 WHEN NOT MATCHED BY TARGET THEN
-    INSERT (Cedula, Nombre, Apellido, Correo, Telefono, RolID, Estado, FechaIngreso)
-    VALUES (src.Cedula, src.Nombre, src.Apellido, src.Correo, src.Telefono, src.RolID, src.Estado, src.FechaIngreso);
+    INSERT
+    (
+        Cedula,
+        Nombre,
+        Apellido,
+        Correo,
+        Telefono,
+        RolID,
+        Estado,
+        FechaIngreso,
+        NombreUsuario,
+        PasswordHash,
+        PasswordSalt
+    )
+    VALUES
+    (
+        src.Cedula,
+        src.Nombre,
+        src.Apellido,
+        src.Correo,
+        src.Telefono,
+        src.RolID,
+        src.Estado,
+        src.FechaIngreso,
+        src.NombreUsuario,
+        src.PasswordHash,
+        src.PasswordSalt
+    );
 GO
 
 -- Socios de prueba.

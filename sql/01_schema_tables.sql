@@ -15,6 +15,16 @@ GO
 USE CoopCoreDB;
 GO
 
+-- Opciones requeridas por SQL Server para crear y mantener indices filtrados.
+SET ANSI_NULLS ON;
+SET QUOTED_IDENTIFIER ON;
+SET ANSI_PADDING ON;
+SET ANSI_WARNINGS ON;
+SET ARITHABORT ON;
+SET CONCAT_NULL_YIELDS_NULL ON;
+SET NUMERIC_ROUNDABORT OFF;
+GO
+
 -- Crear el esquema funcional si aun no existe.
 IF SCHEMA_ID(N'coop') IS NULL
 BEGIN
@@ -86,6 +96,104 @@ BEGIN
         CONSTRAINT FK_Empleado_Rol FOREIGN KEY (RolID)
             REFERENCES coop.Rol(RolID)
     );
+END;
+GO
+
+-- Columnas de autenticacion agregadas como migracion idempotente para
+-- instalaciones existentes del Entregable 1.
+IF NOT EXISTS
+(
+    SELECT 1
+    FROM sys.columns
+    WHERE object_id = OBJECT_ID(N'coop.Empleado')
+      AND name = N'NombreUsuario'
+)
+BEGIN
+    ALTER TABLE coop.Empleado
+        ADD NombreUsuario NVARCHAR(50) NULL;
+END;
+GO
+
+IF NOT EXISTS
+(
+    SELECT 1
+    FROM sys.columns
+    WHERE object_id = OBJECT_ID(N'coop.Empleado')
+      AND name = N'PasswordHash'
+)
+BEGIN
+    ALTER TABLE coop.Empleado
+        ADD PasswordHash VARBINARY(64) NULL;
+END;
+GO
+
+IF NOT EXISTS
+(
+    SELECT 1
+    FROM sys.columns
+    WHERE object_id = OBJECT_ID(N'coop.Empleado')
+      AND name = N'PasswordSalt'
+)
+BEGIN
+    ALTER TABLE coop.Empleado
+        ADD PasswordSalt VARBINARY(32) NULL;
+END;
+GO
+
+IF NOT EXISTS
+(
+    SELECT 1
+    FROM sys.columns
+    WHERE object_id = OBJECT_ID(N'coop.Empleado')
+      AND name = N'UltimoLogin'
+)
+BEGIN
+    ALTER TABLE coop.Empleado
+        ADD UltimoLogin DATETIME2 NULL;
+END;
+GO
+
+IF NOT EXISTS
+(
+    SELECT 1
+    FROM sys.columns
+    WHERE object_id = OBJECT_ID(N'coop.Empleado')
+      AND name = N'IntentosFallidos'
+)
+BEGIN
+    ALTER TABLE coop.Empleado
+        ADD IntentosFallidos INT NOT NULL
+            CONSTRAINT DF_Empleado_IntentosFallidos DEFAULT (0);
+END;
+GO
+
+IF NOT EXISTS
+(
+    SELECT 1
+    FROM sys.columns
+    WHERE object_id = OBJECT_ID(N'coop.Empleado')
+      AND name = N'BloqueadoHasta'
+)
+BEGIN
+    ALTER TABLE coop.Empleado
+        ADD BloqueadoHasta DATETIME2 NULL;
+END;
+GO
+
+-- Un indice unico filtrado permite varios empleados sin credenciales mientras
+-- garantiza que todo NombreUsuario asignado sea unico. Una restriccion UNIQUE
+-- normal solo permitiria un NULL y fallaria al migrar los empleados existentes.
+IF NOT EXISTS
+(
+    SELECT 1
+    FROM sys.indexes
+    WHERE object_id = OBJECT_ID(N'coop.Empleado')
+      AND name = N'UQ_Empleado_NombreUsuario'
+)
+BEGIN
+    CREATE UNIQUE INDEX UQ_Empleado_NombreUsuario
+        ON coop.Empleado (NombreUsuario)
+        WHERE NombreUsuario IS NOT NULL;
 END;
 GO
 

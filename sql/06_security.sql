@@ -487,66 +487,74 @@ GO
    - Los roles de consulta trabajan por vistas
    - Las operaciones se canalizan por SPs
    ------------------------------------- */
+-- Los DENY SELECT sobre tablas base se eliminaron porque rompian el
+-- ownership chaining de las vistas. Como rol_cajero_coop,
+-- rol_oficial_credito_coop y rol_auditor_coop NO tienen GRANT SELECT
+-- sobre las tablas (solo sobre las vistas), por defecto ya no pueden
+-- leerlas. No hace falta DENY explicito.
+--
+-- Los REVOKE siguientes tambien limpian los DENY que hayan quedado aplicados
+-- al ejecutar una version anterior de este script.
 IF OBJECT_ID(N'coop.Socio', N'U') IS NOT NULL
 BEGIN
-    DENY SELECT ON OBJECT::coop.Socio TO rol_cajero_coop;
-    DENY SELECT ON OBJECT::coop.Socio TO rol_oficial_credito_coop;
-    DENY SELECT ON OBJECT::coop.Socio TO rol_auditor_coop;
+    REVOKE SELECT ON OBJECT::coop.Socio FROM rol_cajero_coop;
+    REVOKE SELECT ON OBJECT::coop.Socio FROM rol_oficial_credito_coop;
+    REVOKE SELECT ON OBJECT::coop.Socio FROM rol_auditor_coop;
 END;
 
 IF OBJECT_ID(N'coop.Empleado', N'U') IS NOT NULL
 BEGIN
-    DENY SELECT ON OBJECT::coop.Empleado TO rol_cajero_coop;
-    DENY SELECT ON OBJECT::coop.Empleado TO rol_oficial_credito_coop;
-    DENY SELECT ON OBJECT::coop.Empleado TO rol_auditor_coop;
+    REVOKE SELECT ON OBJECT::coop.Empleado FROM rol_cajero_coop;
+    REVOKE SELECT ON OBJECT::coop.Empleado FROM rol_oficial_credito_coop;
+    REVOKE SELECT ON OBJECT::coop.Empleado FROM rol_auditor_coop;
 END;
 
 IF OBJECT_ID(N'coop.Rol', N'U') IS NOT NULL
 BEGIN
-    DENY SELECT ON OBJECT::coop.Rol TO rol_cajero_coop;
-    DENY SELECT ON OBJECT::coop.Rol TO rol_oficial_credito_coop;
-    DENY SELECT ON OBJECT::coop.Rol TO rol_auditor_coop;
+    REVOKE SELECT ON OBJECT::coop.Rol FROM rol_cajero_coop;
+    REVOKE SELECT ON OBJECT::coop.Rol FROM rol_oficial_credito_coop;
+    REVOKE SELECT ON OBJECT::coop.Rol FROM rol_auditor_coop;
 END;
 
 IF OBJECT_ID(N'coop.ProductoFinanciero', N'U') IS NOT NULL
 BEGIN
-    DENY SELECT ON OBJECT::coop.ProductoFinanciero TO rol_cajero_coop;
-    DENY SELECT ON OBJECT::coop.ProductoFinanciero TO rol_oficial_credito_coop;
-    DENY SELECT ON OBJECT::coop.ProductoFinanciero TO rol_auditor_coop;
+    REVOKE SELECT ON OBJECT::coop.ProductoFinanciero FROM rol_cajero_coop;
+    REVOKE SELECT ON OBJECT::coop.ProductoFinanciero FROM rol_oficial_credito_coop;
+    REVOKE SELECT ON OBJECT::coop.ProductoFinanciero FROM rol_auditor_coop;
 END;
 
 IF OBJECT_ID(N'coop.Cuenta', N'U') IS NOT NULL
 BEGIN
-    DENY SELECT ON OBJECT::coop.Cuenta TO rol_cajero_coop;
-    DENY SELECT ON OBJECT::coop.Cuenta TO rol_oficial_credito_coop;
-    DENY SELECT ON OBJECT::coop.Cuenta TO rol_auditor_coop;
+    REVOKE SELECT ON OBJECT::coop.Cuenta FROM rol_cajero_coop;
+    REVOKE SELECT ON OBJECT::coop.Cuenta FROM rol_oficial_credito_coop;
+    REVOKE SELECT ON OBJECT::coop.Cuenta FROM rol_auditor_coop;
 END;
 
 IF OBJECT_ID(N'coop.Movimiento', N'U') IS NOT NULL
 BEGIN
-    DENY SELECT ON OBJECT::coop.Movimiento TO rol_cajero_coop;
-    DENY SELECT ON OBJECT::coop.Movimiento TO rol_oficial_credito_coop;
-    DENY SELECT ON OBJECT::coop.Movimiento TO rol_auditor_coop;
+    REVOKE SELECT ON OBJECT::coop.Movimiento FROM rol_cajero_coop;
+    REVOKE SELECT ON OBJECT::coop.Movimiento FROM rol_oficial_credito_coop;
+    REVOKE SELECT ON OBJECT::coop.Movimiento FROM rol_auditor_coop;
 END;
 
 IF OBJECT_ID(N'coop.Prestamo', N'U') IS NOT NULL
 BEGIN
-    DENY SELECT ON OBJECT::coop.Prestamo TO rol_cajero_coop;
-    DENY SELECT ON OBJECT::coop.Prestamo TO rol_oficial_credito_coop;
-    DENY SELECT ON OBJECT::coop.Prestamo TO rol_auditor_coop;
+    REVOKE SELECT ON OBJECT::coop.Prestamo FROM rol_cajero_coop;
+    REVOKE SELECT ON OBJECT::coop.Prestamo FROM rol_oficial_credito_coop;
+    REVOKE SELECT ON OBJECT::coop.Prestamo FROM rol_auditor_coop;
 END;
 
 IF OBJECT_ID(N'coop.Cuota', N'U') IS NOT NULL
 BEGIN
-    DENY SELECT ON OBJECT::coop.Cuota TO rol_cajero_coop;
-    DENY SELECT ON OBJECT::coop.Cuota TO rol_oficial_credito_coop;
-    DENY SELECT ON OBJECT::coop.Cuota TO rol_auditor_coop;
+    REVOKE SELECT ON OBJECT::coop.Cuota FROM rol_cajero_coop;
+    REVOKE SELECT ON OBJECT::coop.Cuota FROM rol_oficial_credito_coop;
+    REVOKE SELECT ON OBJECT::coop.Cuota FROM rol_auditor_coop;
 END;
 
 IF OBJECT_ID(N'coop.Auditoria', N'U') IS NOT NULL
 BEGIN
-    DENY SELECT ON OBJECT::coop.Auditoria TO rol_cajero_coop;
-    DENY SELECT ON OBJECT::coop.Auditoria TO rol_oficial_credito_coop;
-    DENY SELECT ON OBJECT::coop.Auditoria TO rol_auditor_coop;
+    REVOKE SELECT ON OBJECT::coop.Auditoria FROM rol_cajero_coop;
+    REVOKE SELECT ON OBJECT::coop.Auditoria FROM rol_oficial_credito_coop;
+    REVOKE SELECT ON OBJECT::coop.Auditoria FROM rol_auditor_coop;
 END;
 GO
