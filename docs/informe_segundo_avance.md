@@ -256,14 +256,11 @@ Se actualizaron:
 
 Tambien se crearon:
 
-- `docs/guia_defensa_entregable_2.md`
 - `docs/evidencias/README.md`
 - `docs/evidencias/entregable_2_smoke_test.md`
 
-La guia de defensa contiene un flujo sugerido de demostracion, preguntas
-probables y respuestas tecnicas. El smoke test describe la validacion completa
-en SQL Server, la API, la auditoria, el bloqueo de usuarios y el historial de
-Git.
+El smoke test describe la validacion completa en SQL Server, la API, la
+auditoria, el bloqueo de usuarios y el historial de Git.
 
 Se definieron 15 capturas con nombres estandarizados para organizar las
 evidencias del avance.
@@ -303,7 +300,7 @@ La separacion de responsabilidades es:
 | Seguridad y pruebas | `sql/06_security.sql`, `sql/07_security_tests.sql` |
 | API | `api/package.json`, `api/src/db.js`, `api/src/server.js`, `api/src/routes/auth.js`, `api/src/routes/cuentas.js` |
 | Configuracion | `.gitignore`, `api/.env.example` |
-| Documentacion | `README.md`, `api/README.md`, `docs/manual_tecnico.md`, `docs/guia_defensa_entregable_2.md` |
+| Documentacion | `README.md`, `api/README.md`, `docs/manual_tecnico.md`, `docs/informe_segundo_avance.md` |
 | Evidencias | `docs/evidencias/README.md`, `docs/evidencias/entregable_2_smoke_test.md` |
 
 ## 7. Historial de los siete prompts originales
@@ -315,7 +312,7 @@ La separacion de responsabilidades es:
 | 3 | `d9da3d9` | SPs de autenticacion y pruebas de ownership chaining. |
 | 4 | `97e835b` | Nueve SPs funcionales y ocho en version inicial. |
 | 5 | `71168ea` | API minima para login y consulta de saldo. |
-| 6 | `43da60c` | README, manual tecnico y guia de defensa. |
+| 6 | `43da60c` | Documentacion del estado de SPs y API del Entregable 2. |
 | 7 | `51e3e72` | Smoke test y checklist de 15 evidencias. |
 
 Todos estos commits fueron enviados a la rama `main` del repositorio de

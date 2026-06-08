@@ -92,8 +92,8 @@ funcionales.
    SP funcional y los 8 SPs transaccionales en version inicial.
 4. **Prompt 5 - API minima.** Crear la capa Node.js, Express y `mssql` con
    endpoints de login y consulta de saldo que ejecuten SPs reales.
-5. **Prompt 6 - Documentacion.** Actualizar el README y el manual tecnico, y
-   crear la guia de defensa del Entregable 2.
+5. **Prompt 6 - Documentacion.** Actualizar el README y el manual tecnico con
+   el estado completo del Entregable 2.
 6. **Prompt 7 - Smoke test.** Crear el checklist integral y la estructura para
    capturar evidencias de SQL Server, API y Git.
 

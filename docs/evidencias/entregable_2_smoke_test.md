@@ -264,7 +264,7 @@ Esta seccion es opcional, pero se recomienda para la defensa.
   3. `feat(auth): SPs de autenticacion con ownership chaining probado`
   4. `feat(sp): 100% de SPs planificados (9 funcionales + 8 en version inicial)`
   5. `feat(api): API minima con endpoints de login y consulta de saldo`
-  6. `docs: documentar Entregable 2 (estado de SPs, API y guia de defensa)`
+  6. `43da60c` - documentacion del estado de SPs y API.
   7. `docs: smoke test y checklist de evidencias para Entregable 2`
 - [ ] Guardar la captura como `entregable_2_15_git_log.png`.
 
@@ -277,4 +277,4 @@ Esta seccion es opcional, pero se recomienda para la defensa.
 - [ ] El usuario `mlrojas` quedo desbloqueado.
 - [ ] El equipo reviso las evidencias y esta listo para la sustentacion.
 - [ ] La entrega final incluye la URL de GitHub, el historial de commits, la
-      carpeta de evidencias y la guia de defensa.
+      carpeta de evidencias y el informe del segundo avance.
