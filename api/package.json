@@ -1,0 +1,15 @@
+{
+  "name": "coopcore-api",
+  "version": "0.1.0",
+  "description": "API minima de CoopCore. Capa delgada que llama stored procedures de SQL Server.",
+  "main": "src/server.js",
+  "scripts": {
+    "start": "node src/server.js",
+    "dev": "node --watch src/server.js"
+  },
+  "dependencies": {
+    "dotenv": "16.4.5",
+    "express": "4.19.2",
+    "mssql": "11.0.1"
+  }
+}
