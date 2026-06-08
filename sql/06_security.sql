@@ -472,10 +472,18 @@ GO
 
 /* -------------------------------------
    API
-   - EXECUTE sobre esquema
+   - EXECUTE solo sobre SPs autorizados
    - DENY de acceso directo a datos
    ------------------------------------- */
-GRANT EXECUTE ON SCHEMA::coop TO rol_api_coop;
+-- El permiso a nivel de esquema de la version anterior se retira para que
+-- nuevos SPs no queden expuestos automaticamente al API.
+REVOKE EXECUTE ON SCHEMA::coop FROM rol_api_coop;
+
+IF OBJECT_ID(N'coop.sp_ConsultarSaldo', N'P') IS NOT NULL
+    GRANT EXECUTE ON OBJECT::coop.sp_ConsultarSaldo TO rol_api_coop;
+IF OBJECT_ID(N'coop.sp_ValidarLogin', N'P') IS NOT NULL
+    GRANT EXECUTE ON OBJECT::coop.sp_ValidarLogin TO rol_api_coop;
+
 DENY SELECT ON SCHEMA::coop TO rol_api_coop;
 DENY INSERT ON SCHEMA::coop TO rol_api_coop;
 DENY UPDATE ON SCHEMA::coop TO rol_api_coop;
@@ -556,5 +564,25 @@ BEGIN
     REVOKE SELECT ON OBJECT::coop.Auditoria FROM rol_cajero_coop;
     REVOKE SELECT ON OBJECT::coop.Auditoria FROM rol_oficial_credito_coop;
     REVOKE SELECT ON OBJECT::coop.Auditoria FROM rol_auditor_coop;
+END;
+GO
+
+/* -------------------------------------
+   AUTENTICACION
+   - API: solo login
+   - Roles internos: operaciones autorizadas
+   ------------------------------------- */
+IF OBJECT_ID(N'coop.sp_ValidarLogin', N'P') IS NOT NULL
+    GRANT EXECUTE ON OBJECT::coop.sp_ValidarLogin TO rol_admin_coop;
+
+IF OBJECT_ID(N'coop.sp_ObtenerUsuarioPorCredenciales', N'P') IS NOT NULL
+    GRANT EXECUTE ON OBJECT::coop.sp_ObtenerUsuarioPorCredenciales TO rol_admin_coop;
+
+IF OBJECT_ID(N'coop.sp_CambiarPassword', N'P') IS NOT NULL
+BEGIN
+    GRANT EXECUTE ON OBJECT::coop.sp_CambiarPassword TO rol_admin_coop;
+    GRANT EXECUTE ON OBJECT::coop.sp_CambiarPassword TO rol_cajero_coop;
+    GRANT EXECUTE ON OBJECT::coop.sp_CambiarPassword TO rol_oficial_credito_coop;
+    GRANT EXECUTE ON OBJECT::coop.sp_CambiarPassword TO rol_auditor_coop;
 END;
 GO

@@ -15,6 +15,413 @@ GO
 USE CoopCoreDB;
 GO
 
+-- Opciones requeridas al modificar coop.Empleado, que tiene un indice
+-- unico filtrado sobre NombreUsuario.
+SET ANSI_NULLS ON;
+SET QUOTED_IDENTIFIER ON;
+SET ANSI_PADDING ON;
+SET ANSI_WARNINGS ON;
+SET ARITHABORT ON;
+SET CONCAT_NULL_YIELDS_NULL ON;
+SET NUMERIC_ROUNDABORT OFF;
+GO
+
+IF SCHEMA_ID(N'coop') IS NULL
+BEGIN
+    THROW 51002, 'No existe el esquema coop. Ejecute primero sql/01_schema_tables.sql.', 1;
+END;
+GO
+
+/* ============================================================
+   SP 6: Validar credenciales de acceso
+   Proposito:
+   - Autenticar usuarios del API con SHA2_256 y salt.
+   - Registrar intentos en auditoria.
+   - Bloquear la cuenta durante 15 minutos despues de 5 fallos.
+   Parametros:
+   - @NombreUsuario: usuario de aplicacion.
+   - @Password: password en texto plano recibido para validacion.
+   Resultados:
+   - OK: credenciales validas y datos del empleado.
+   - FALLO: credenciales invalidas o usuario inactivo/sin credenciales.
+   - BLOQUEADO: cuenta dentro del periodo de bloqueo temporal.
+   ============================================================ */
+CREATE OR ALTER PROCEDURE coop.sp_ValidarLogin
+    @NombreUsuario NVARCHAR(50),
+    @Password NVARCHAR(100)
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    BEGIN TRY
+        SET @NombreUsuario = NULLIF(LTRIM(RTRIM(@NombreUsuario)), N'');
+        SET @Password = NULLIF(@Password, N'');
+
+        IF @NombreUsuario IS NULL OR @Password IS NULL
+        BEGIN
+            THROW 52070, 'Los parametros @NombreUsuario y @Password son obligatorios.', 1;
+        END;
+
+        DECLARE @EmpleadoID INT;
+        DECLARE @PasswordHashAlmacenado VARBINARY(64);
+        DECLARE @PasswordSaltAlmacenado VARBINARY(32);
+        DECLARE @Estado NVARCHAR(20);
+        DECLARE @IntentosFallidos INT;
+        DECLARE @BloqueadoHasta DATETIME2;
+        DECLARE @HashCalculado VARBINARY(64);
+
+        SELECT
+            @EmpleadoID = e.EmpleadoID,
+            @PasswordHashAlmacenado = e.PasswordHash,
+            @PasswordSaltAlmacenado = e.PasswordSalt,
+            @Estado = e.Estado,
+            @IntentosFallidos = e.IntentosFallidos,
+            @BloqueadoHasta = e.BloqueadoHasta
+        FROM coop.Empleado AS e
+        WHERE e.NombreUsuario = @NombreUsuario;
+
+        -- No revelar al cliente si el usuario no existe.
+        IF @EmpleadoID IS NULL
+        BEGIN
+            INSERT INTO coop.Auditoria (Entidad, Accion, Descripcion)
+            VALUES
+            (
+                N'EMPLEADO',
+                N'LOGIN',
+                N'Login fallido. Usuario inexistente: ' + @NombreUsuario
+            );
+
+            SELECT
+                N'FALLO' AS Resultado,
+                N'Credenciales invalidas.' AS Mensaje;
+            RETURN;
+        END;
+
+        IF @Estado <> N'ACTIVO'
+        BEGIN
+            INSERT INTO coop.Auditoria
+            (
+                Entidad,
+                EntidadID,
+                Accion,
+                Descripcion,
+                EmpleadoID
+            )
+            VALUES
+            (
+                N'EMPLEADO',
+                CAST(@EmpleadoID AS NVARCHAR(100)),
+                N'LOGIN',
+                N'Login fallido. Usuario inactivo.',
+                @EmpleadoID
+            );
+
+            SELECT
+                N'FALLO' AS Resultado,
+                N'Credenciales invalidas.' AS Mensaje;
+            RETURN;
+        END;
+
+        IF @PasswordHashAlmacenado IS NULL OR @PasswordSaltAlmacenado IS NULL
+        BEGIN
+            INSERT INTO coop.Auditoria
+            (
+                Entidad,
+                EntidadID,
+                Accion,
+                Descripcion,
+                EmpleadoID
+            )
+            VALUES
+            (
+                N'EMPLEADO',
+                CAST(@EmpleadoID AS NVARCHAR(100)),
+                N'LOGIN',
+                N'Login fallido. Usuario sin credenciales configuradas.',
+                @EmpleadoID
+            );
+
+            SELECT
+                N'FALLO' AS Resultado,
+                N'Credenciales invalidas.' AS Mensaje;
+            RETURN;
+        END;
+
+        IF @BloqueadoHasta IS NOT NULL AND @BloqueadoHasta > SYSDATETIME()
+        BEGIN
+            INSERT INTO coop.Auditoria
+            (
+                Entidad,
+                EntidadID,
+                Accion,
+                Descripcion,
+                EmpleadoID
+            )
+            VALUES
+            (
+                N'EMPLEADO',
+                CAST(@EmpleadoID AS NVARCHAR(100)),
+                N'LOGIN',
+                N'Login fallido. Usuario bloqueado hasta '
+                    + CONVERT(NVARCHAR(30), @BloqueadoHasta, 121),
+                @EmpleadoID
+            );
+
+            SELECT
+                N'BLOQUEADO' AS Resultado,
+                N'Cuenta bloqueada temporalmente. Intente mas tarde.' AS Mensaje,
+                @BloqueadoHasta AS BloqueadoHasta;
+            RETURN;
+        END;
+
+        SET @HashCalculado = HASHBYTES
+        (
+            'SHA2_256',
+            @PasswordSaltAlmacenado + CONVERT(VARBINARY(MAX), @Password)
+        );
+
+        IF @HashCalculado <> @PasswordHashAlmacenado
+        BEGIN
+            UPDATE coop.Empleado
+            SET IntentosFallidos = IntentosFallidos + 1,
+                BloqueadoHasta = CASE
+                    WHEN IntentosFallidos + 1 >= 5
+                    THEN DATEADD(MINUTE, 15, SYSDATETIME())
+                    ELSE BloqueadoHasta
+                END
+            WHERE EmpleadoID = @EmpleadoID;
+
+            INSERT INTO coop.Auditoria
+            (
+                Entidad,
+                EntidadID,
+                Accion,
+                Descripcion,
+                EmpleadoID
+            )
+            VALUES
+            (
+                N'EMPLEADO',
+                CAST(@EmpleadoID AS NVARCHAR(100)),
+                N'LOGIN',
+                N'Login fallido. Password incorrecto. Intentos: '
+                    + CAST(@IntentosFallidos + 1 AS NVARCHAR(10)),
+                @EmpleadoID
+            );
+
+            SELECT
+                N'FALLO' AS Resultado,
+                N'Credenciales invalidas.' AS Mensaje;
+            RETURN;
+        END;
+
+        UPDATE coop.Empleado
+        SET IntentosFallidos = 0,
+            BloqueadoHasta = NULL,
+            UltimoLogin = SYSDATETIME()
+        WHERE EmpleadoID = @EmpleadoID;
+
+        INSERT INTO coop.Auditoria
+        (
+            Entidad,
+            EntidadID,
+            Accion,
+            Descripcion,
+            EmpleadoID
+        )
+        VALUES
+        (
+            N'EMPLEADO',
+            CAST(@EmpleadoID AS NVARCHAR(100)),
+            N'LOGIN',
+            N'Login exitoso.',
+            @EmpleadoID
+        );
+
+        SELECT
+            N'OK' AS Resultado,
+            e.EmpleadoID,
+            e.NombreUsuario,
+            e.Nombre,
+            e.Apellido,
+            e.Correo,
+            r.NombreRol,
+            N'Login exitoso.' AS Mensaje
+        FROM coop.Empleado AS e
+        LEFT JOIN coop.Rol AS r
+            ON r.RolID = e.RolID
+        WHERE e.EmpleadoID = @EmpleadoID;
+    END TRY
+    BEGIN CATCH
+        DECLARE @ErrMsgLogin NVARCHAR(4000) =
+            N'sp_ValidarLogin: ' + ERROR_MESSAGE();
+        THROW 52060, @ErrMsgLogin, 1;
+    END CATCH;
+END;
+GO
+
+/* ============================================================
+   SP 7: Obtener usuario por credenciales
+   Proposito:
+   - Validar credenciales para consultas internas sin auditoria ni bloqueo.
+   Parametros:
+   - @NombreUsuario: usuario de aplicacion.
+   - @Password: password en texto plano recibido para validacion.
+   Resultado:
+   - Una fila con datos del empleado si las credenciales coinciden.
+   - Resultset vacio si las credenciales no coinciden.
+   ============================================================ */
+CREATE OR ALTER PROCEDURE coop.sp_ObtenerUsuarioPorCredenciales
+    @NombreUsuario NVARCHAR(50),
+    @Password NVARCHAR(100)
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    BEGIN TRY
+        SET @NombreUsuario = NULLIF(LTRIM(RTRIM(@NombreUsuario)), N'');
+        SET @Password = NULLIF(@Password, N'');
+
+        IF @NombreUsuario IS NULL OR @Password IS NULL
+        BEGIN
+            THROW 52071, 'Los parametros son obligatorios.', 1;
+        END;
+
+        SELECT
+            e.EmpleadoID,
+            e.NombreUsuario,
+            e.Nombre,
+            e.Apellido,
+            r.NombreRol
+        FROM coop.Empleado AS e
+        LEFT JOIN coop.Rol AS r
+            ON r.RolID = e.RolID
+        WHERE e.NombreUsuario = @NombreUsuario
+          AND e.Estado = N'ACTIVO'
+          AND e.PasswordHash IS NOT NULL
+          AND e.PasswordSalt IS NOT NULL
+          AND e.PasswordHash = HASHBYTES
+          (
+              'SHA2_256',
+              e.PasswordSalt + CONVERT(VARBINARY(MAX), @Password)
+          );
+    END TRY
+    BEGIN CATCH
+        DECLARE @ErrMsgCredenciales NVARCHAR(4000) =
+            N'sp_ObtenerUsuarioPorCredenciales: ' + ERROR_MESSAGE();
+        THROW 52061, @ErrMsgCredenciales, 1;
+    END CATCH;
+END;
+GO
+
+/* ============================================================
+   SP 8: Cambiar password de un empleado
+   Proposito:
+   - Validar el password actual y guardar un nuevo hash con salt aleatorio.
+   Parametros:
+   - @NombreUsuario: usuario de aplicacion.
+   - @PasswordActual: password vigente.
+   - @PasswordNuevo: nuevo password, minimo 8 caracteres.
+   Resultado:
+   - OK: password actualizado y evento registrado en auditoria.
+   ============================================================ */
+CREATE OR ALTER PROCEDURE coop.sp_CambiarPassword
+    @NombreUsuario NVARCHAR(50),
+    @PasswordActual NVARCHAR(100),
+    @PasswordNuevo NVARCHAR(100)
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    BEGIN TRY
+        SET @NombreUsuario = NULLIF(LTRIM(RTRIM(@NombreUsuario)), N'');
+        SET @PasswordActual = NULLIF(@PasswordActual, N'');
+        SET @PasswordNuevo = NULLIF(@PasswordNuevo, N'');
+
+        IF @NombreUsuario IS NULL
+           OR @PasswordActual IS NULL
+           OR @PasswordNuevo IS NULL
+        BEGIN
+            THROW 52072, 'Todos los parametros son obligatorios.', 1;
+        END;
+
+        IF LEN(@PasswordNuevo) < 8
+        BEGIN
+            THROW 52073, 'El nuevo password debe tener al menos 8 caracteres.', 1;
+        END;
+
+        DECLARE @EmpleadoID INT;
+        DECLARE @SaltActual VARBINARY(32);
+        DECLARE @HashActual VARBINARY(64);
+
+        SELECT
+            @EmpleadoID = e.EmpleadoID,
+            @SaltActual = e.PasswordSalt,
+            @HashActual = e.PasswordHash
+        FROM coop.Empleado AS e
+        WHERE e.NombreUsuario = @NombreUsuario
+          AND e.Estado = N'ACTIVO';
+
+        IF @EmpleadoID IS NULL
+        BEGIN
+            THROW 52074, 'Usuario no encontrado o inactivo.', 1;
+        END;
+
+        IF @SaltActual IS NULL
+           OR @HashActual IS NULL
+           OR HASHBYTES
+              (
+                  'SHA2_256',
+                  @SaltActual + CONVERT(VARBINARY(MAX), @PasswordActual)
+              ) <> @HashActual
+        BEGIN
+            THROW 52075, 'Password actual incorrecto.', 1;
+        END;
+
+        DECLARE @SaltNuevo VARBINARY(32) = CRYPT_GEN_RANDOM(32);
+        DECLARE @HashNuevo VARBINARY(64) = HASHBYTES
+        (
+            'SHA2_256',
+            @SaltNuevo + CONVERT(VARBINARY(MAX), @PasswordNuevo)
+        );
+
+        UPDATE coop.Empleado
+        SET PasswordSalt = @SaltNuevo,
+            PasswordHash = @HashNuevo
+        WHERE EmpleadoID = @EmpleadoID;
+
+        INSERT INTO coop.Auditoria
+        (
+            Entidad,
+            EntidadID,
+            Accion,
+            Descripcion,
+            EmpleadoID
+        )
+        VALUES
+        (
+            N'EMPLEADO',
+            CAST(@EmpleadoID AS NVARCHAR(100)),
+            N'UPDATE',
+            N'Cambio de password.',
+            @EmpleadoID
+        );
+
+        SELECT
+            N'OK' AS Resultado,
+            N'Password actualizado correctamente.' AS Mensaje;
+    END TRY
+    BEGIN CATCH
+        DECLARE @ErrMsgPassword NVARCHAR(4000) =
+            N'sp_CambiarPassword: ' + ERROR_MESSAGE();
+        THROW 52062, @ErrMsgPassword, 1;
+    END CATCH;
+END;
+GO
+
+USE CoopCoreDB;
+GO
+
 IF SCHEMA_ID(N'coop') IS NULL
 BEGIN
     THROW 51002, 'No existe el esquema coop. Ejecute primero sql/01_schema_tables.sql.', 1;
