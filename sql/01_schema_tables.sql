@@ -8,7 +8,12 @@
 
 IF DB_ID(N'CoopCoreDB') IS NULL
 BEGIN
-    THROW 51000, 'No existe CoopCoreDB. Ejecute primero sql/00_create_database.sql.', 1;
+    RAISERROR(
+        'No existe CoopCoreDB. Ejecute primero sql/00_create_database.sql.',
+        16,
+        1
+    );
+    RETURN;
 END;
 GO
 
@@ -191,9 +196,11 @@ IF NOT EXISTS
       AND name = N'UQ_Empleado_NombreUsuario'
 )
 BEGIN
-    CREATE UNIQUE INDEX UQ_Empleado_NombreUsuario
-        ON coop.Empleado (NombreUsuario)
-        WHERE NombreUsuario IS NOT NULL;
+    EXEC sys.sp_executesql N'
+        CREATE UNIQUE INDEX UQ_Empleado_NombreUsuario
+            ON coop.Empleado (NombreUsuario)
+            WHERE NombreUsuario IS NOT NULL;
+    ';
 END;
 GO
 
