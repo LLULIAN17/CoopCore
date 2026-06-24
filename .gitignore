@@ -2,6 +2,9 @@
 api/.env
 api/.env.*
 !api/.env.example
+api/CoopCore.Api/appsettings.Development.json
+api/CoopCore.Api/appsettings.Local.json
+api/CoopCore.Api/appsettings.Local.*.json
 
 # SQL Server and local connection helpers
 *.sqlproj.user
