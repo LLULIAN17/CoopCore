@@ -62,6 +62,28 @@ En desarrollo, el documento OpenAPI queda disponible en:
 http://localhost:5000/openapi/v1.json
 ```
 
+## Probar con Postman
+
+Importe estos dos archivos en Postman:
+
+```text
+api/CoopCore.Api/Postman/CoopCore.Api.postman_collection.json
+api/CoopCore.Api/Postman/CoopCore.Local.postman_environment.json
+```
+
+Luego seleccione el environment **CoopCore Local** y ejecute las solicitudes en
+este orden sugerido:
+
+1. `GET /api/health`
+2. `POST /api/auth/login`
+3. `GET /api/socios/{id}`
+4. `GET /api/cuentas/{id}/saldo`
+5. `GET /api/cuentas/{id}/movimientos`
+6. `GET /api/prestamos/{id}`
+
+La solicitud `POST /api/socios` crea un socio de prueba usando `{{$timestamp}}`
+para evitar cedulas repetidas.
+
 ## Endpoints y stored procedures
 
 | Metodo | Ruta | Stored procedure |
