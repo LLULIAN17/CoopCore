@@ -1,6 +1,7 @@
-# CoopCore.Api
+# CoopCore.Api - Entregable 3
 
-API inicial de CoopCore en **.NET 10** con ASP.NET Core Web API.
+API inicial de CoopCore en **.NET 10** con ASP.NET Core Web API para el tercer
+entregable del proyecto.
 
 ## Objetivo
 

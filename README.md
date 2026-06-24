@@ -41,7 +41,7 @@ No usar ni subir credenciales reales.
 La API esta implementada como capa delgada y no reemplaza la logica en base de
 datos. El frontend permanece opcional.
 
-## Entregable 2 - Stored Procedures + API minima
+## Entregable 2 - Stored Procedures
 
 ### Estado de stored procedures
 
@@ -80,11 +80,10 @@ de saldos y `ROLLBACK` se completara en la Fase de Transacciones.
 El estado pendiente se marca internamente con `THROW 52099`; el bloque
 `CATCH` de cada SP lo expone como error 52199 con un mensaje explicito.
 
-### API minima
+## Entregable 3 - API inicial en .NET 10
 
-La API vigente para la implementacion inicial del proyecto esta en
-`api/CoopCore.Api` y usa **.NET 10 + ASP.NET Core Web API**. Mantiene una
-arquitectura por capas:
+La API vigente para el tercer entregable esta en `api/CoopCore.Api` y usa
+**.NET 10 + ASP.NET Core Web API**. Mantiene una arquitectura por capas:
 
 `Controllers -> Interfaces -> Services -> Db`
 
@@ -103,8 +102,6 @@ Endpoints implementados:
 Tambien ofrece `GET /api/health` como healthcheck, sin acceso a datos.
 
 La configuracion y los ejemplos de uso estan en `api/CoopCore.Api/README.md`.
-
-## API inicial del proyecto en .NET 10
 
 ### Objetivo
 

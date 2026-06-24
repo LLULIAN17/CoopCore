@@ -1,6 +1,6 @@
-# CoopCore API
+# CoopCore API - Entregable 3
 
-La implementacion vigente de la API inicial del proyecto esta en
+La implementacion vigente de la API inicial del tercer entregable esta en
 `api/CoopCore.Api` y usa **.NET 10 + ASP.NET Core Web API**.
 
 La carpeta `api/src` corresponde al prototipo Node.js creado en una fase

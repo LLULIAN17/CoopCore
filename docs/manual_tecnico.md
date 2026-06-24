@@ -10,7 +10,7 @@ La API en `api/` es una capa delgada: valida la forma de las peticiones HTTP,
 ejecuta stored procedures autorizados y transforma sus resultados a JSON. No
 contiene consultas SQL directas ni reglas de negocio.
 
-## Estado actual del proyecto (Entregable 2)
+## Estado del Entregable 2 - Stored procedures
 
 ### Resumen ejecutivo
 
@@ -20,7 +20,6 @@ contiene consultas SQL directas ni reglas de negocio.
   por 2 SPs funcionales.
 - Los otros 8 SPs tienen su contrato definitivo y validaciones basicas, pero
   su implementacion transaccional permanece pendiente.
-- La API .NET 10 ejecuta SPs reales con un login de minimo privilegio.
 - La autenticacion incluye SHA2_256 con salt, auditoria y bloqueo temporal.
 - `sql/07_security_tests.sql` contiene 11 casos de seguridad.
 
@@ -65,8 +64,6 @@ pendiente. Su `CATCH` agrega el nombre del SP y vuelve a lanzar el error como
 7. La suite de seguridad paso de 7 a 11 casos.
 8. El permiso amplio `EXECUTE ON SCHEMA::coop` del API fue reemplazado por
    permisos por objeto sobre `sp_ValidarLogin` y `sp_ConsultarSaldo`.
-9. Se implemento la API inicial en .NET 10 con modulos Auth, Socios, Cuentas
-   y Prestamos.
 
 ## Autenticacion
 
@@ -150,9 +147,9 @@ transaccionales en version inicial.
 Los casos exitosos imprimen `[OK]`; las operaciones prohibidas imprimen
 `[DENEGADO ESPERADO]`. El caso 10 debe imprimir `[OK]`, no `[ALERTA]`.
 
-## API
+## Estado del Entregable 3 - API inicial en .NET 10
 
-La API inicial vigente usa:
+La API inicial del tercer entregable usa:
 
 - .NET SDK `10`.
 - ASP.NET Core Web API con controladores.
@@ -176,8 +173,6 @@ conexion bajo demanda y ejecutan SPs con `coop_api_login`.
 
 Los detalles de instalacion y configuracion estan en
 `api/CoopCore.Api/README.md`.
-
-## Implementacion API inicial en .NET 10
 
 ### Estructura por capas
 
