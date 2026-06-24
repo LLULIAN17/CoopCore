@@ -14,7 +14,8 @@ almacenados. La API mantiene un rol delgado: solicitar operaciones a la BD.
 
 - `sql/`: scripts T-SQL por fases.
 - `docs/`: documentacion tecnica y evidencias.
-- `api/`: capa delgada Node.js que ejecuta stored procedures.
+- `api/`: capa delgada HTTP; la implementacion vigente esta en
+  `api/CoopCore.Api` con .NET 10.
 - `frontend/` (opcional): capa cliente opcional.
 
 ## Orden sugerido de ejecucion de scripts
@@ -81,12 +82,72 @@ El estado pendiente se marca internamente con `THROW 52099`; el bloque
 
 ### API minima
 
-La API usa Node.js, Express y `mssql`. Se conecta como `coop_api_login`, no
-como `sa`, y solo tiene permiso para ejecutar dos SPs:
+La API vigente para la implementacion inicial del proyecto esta en
+`api/CoopCore.Api` y usa **.NET 10 + ASP.NET Core Web API**. Mantiene una
+arquitectura por capas:
+
+`Controllers -> Interfaces -> Services -> Db`
+
+La API se conecta como `coop_api_login`, no como `sa`, y ejecuta stored
+procedures reales mediante ADO.NET con `Microsoft.Data.SqlClient`.
+
+Endpoints implementados:
 
 - `POST /api/auth/login` -> `coop.sp_ValidarLogin`
+- `GET /api/socios/{id}` -> `coop.sp_ConsultarSocio`
+- `POST /api/socios` -> `coop.sp_RegistrarSocio`
 - `GET /api/cuentas/:numeroCuenta/saldo` -> `coop.sp_ConsultarSaldo`
+- `GET /api/cuentas/:numeroCuenta/movimientos` -> `coop.sp_ConsultarMovimientos`
+- `GET /api/prestamos/{numeroPrestamo}` -> `coop.sp_ConsultarPrestamo`
 
 Tambien ofrece `GET /api/health` como healthcheck, sin acceso a datos.
 
-La configuracion y los ejemplos de uso estan en `api/README.md`.
+La configuracion y los ejemplos de uso estan en `api/CoopCore.Api/README.md`.
+
+## API inicial del proyecto en .NET 10
+
+### Objetivo
+
+Crear una primera API academica para CoopCore usando .NET 10, sin mover la
+logica de negocio desde SQL Server hacia C#. La API recibe solicitudes HTTP,
+valida datos minimos, llama stored procedures y devuelve respuestas JSON.
+
+### Modulos implementados
+
+| Modulo | Controller | Service | Stored procedures |
+|---|---|---|---|
+| Auth | `AuthController` | `AuthService` | `coop.sp_ValidarLogin` |
+| Socios | `SociosController` | `SocioService` | `coop.sp_ConsultarSocio`, `coop.sp_RegistrarSocio` |
+| Cuentas | `CuentasController` | `CuentaService` | `coop.sp_ConsultarSaldo`, `coop.sp_ConsultarMovimientos` |
+| Prestamos | `PrestamosController` | `PrestamoService` | `coop.sp_ConsultarPrestamo` |
+
+### Ejecutar la API
+
+```powershell
+Copy-Item api\CoopCore.Api\appsettings.example.json api\CoopCore.Api\appsettings.Development.json
+dotnet restore api\CoopCore.Api\CoopCore.Api.csproj
+dotnet build api\CoopCore.Api\CoopCore.Api.csproj
+dotnet run --project api\CoopCore.Api\CoopCore.Api.csproj --urls http://localhost:5000
+```
+
+Antes de probar endpoints de datos, ajustar
+`ConnectionStrings:CoopCoreDb` en `appsettings.Development.json`.
+
+### Probar endpoints
+
+```powershell
+curl.exe http://localhost:5000/api/health
+
+curl.exe -X POST http://localhost:5000/api/auth/login `
+  -H "Content-Type: application/json" `
+  -d '{"usuario":"mlrojas","password":"Lab_Cajero_001"}'
+
+curl.exe http://localhost:5000/api/socios/SO-1001
+curl.exe http://localhost:5000/api/cuentas/CTA-10001/saldo
+curl.exe http://localhost:5000/api/cuentas/CTA-10001/movimientos
+curl.exe http://localhost:5000/api/prestamos/PR-20001
+```
+
+En ambiente de desarrollo, el documento OpenAPI queda disponible en
+`/openapi/v1.json` para probar desde herramientas como Postman, Thunder Client
+o un cliente Swagger/OpenAPI.

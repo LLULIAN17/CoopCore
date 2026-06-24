@@ -20,7 +20,7 @@ contiene consultas SQL directas ni reglas de negocio.
   por 2 SPs funcionales.
 - Los otros 8 SPs tienen su contrato definitivo y validaciones basicas, pero
   su implementacion transaccional permanece pendiente.
-- La API ejecuta 2 SPs reales con un login de minimo privilegio.
+- La API .NET 10 ejecuta SPs reales con un login de minimo privilegio.
 - La autenticacion incluye SHA2_256 con salt, auditoria y bloqueo temporal.
 - `sql/07_security_tests.sql` contiene 11 casos de seguridad.
 
@@ -65,7 +65,8 @@ pendiente. Su `CATCH` agrega el nombre del SP y vuelve a lanzar el error como
 7. La suite de seguridad paso de 7 a 11 casos.
 8. El permiso amplio `EXECUTE ON SCHEMA::coop` del API fue reemplazado por
    permisos por objeto sobre `sp_ValidarLogin` y `sp_ConsultarSaldo`.
-9. Se implemento la API Node.js con endpoints de login y saldo.
+9. Se implemento la API inicial en .NET 10 con modulos Auth, Socios, Cuentas
+   y Prestamos.
 
 ## Autenticacion
 
@@ -120,7 +121,11 @@ Los roles personalizados son:
 El API usa `coop_api_login` y su usuario de base `coop_api_user`. Tiene:
 
 - `GRANT EXECUTE` sobre `coop.sp_ValidarLogin`.
+- `GRANT EXECUTE` sobre `coop.sp_ConsultarSocio`.
+- `GRANT EXECUTE` sobre `coop.sp_RegistrarSocio`.
 - `GRANT EXECUTE` sobre `coop.sp_ConsultarSaldo`.
+- `GRANT EXECUTE` sobre `coop.sp_ConsultarMovimientos`.
+- `GRANT EXECUTE` sobre `coop.sp_ConsultarPrestamo`.
 - `DENY SELECT`, `INSERT`, `UPDATE` y `DELETE` sobre `SCHEMA::coop`.
 
 No puede ejecutar `sp_CambiarPassword`, `sp_ConsultarAuditoria` ni los SPs
@@ -147,12 +152,12 @@ Los casos exitosos imprimen `[OK]`; las operaciones prohibidas imprimen
 
 ## API
 
-La API usa:
+La API inicial vigente usa:
 
-- Node.js 20 o superior.
-- Express `4.19.2`.
-- `mssql` `11.0.1`.
-- `dotenv` `16.4.5`.
+- .NET SDK `10`.
+- ASP.NET Core Web API con controladores.
+- `Microsoft.Data.SqlClient` para ejecutar stored procedures con ADO.NET.
+- OpenAPI en ambiente de desarrollo.
 
 Endpoints:
 
@@ -160,16 +165,86 @@ Endpoints:
 |---|---|---|
 | `GET /api/health` | Ninguno | 200 |
 | `POST /api/auth/login` | `coop.sp_ValidarLogin` | 200, 400, 401, 423, 500 |
-| `GET /api/cuentas/:numeroCuenta/saldo` | `coop.sp_ConsultarSaldo` | 200, 404, 500 |
+| `GET /api/socios/{id}` | `coop.sp_ConsultarSocio` | 200, 400, 404, 500 |
+| `POST /api/socios` | `coop.sp_RegistrarSocio` | 201, 400, 409, 500 |
+| `GET /api/cuentas/{numeroCuenta}/saldo` | `coop.sp_ConsultarSaldo` | 200, 400, 404, 500 |
+| `GET /api/cuentas/{numeroCuenta}/movimientos` | `coop.sp_ConsultarMovimientos` | 200, 400, 404, 500 |
+| `GET /api/prestamos/{numeroPrestamo}` | `coop.sp_ConsultarPrestamo` | 200, 400, 404, 500 |
 
-El arranque comprueba primero la conexion a SQL Server y luego muestra:
+El healthcheck no abre conexion a SQL Server. Los endpoints de datos abren la
+conexion bajo demanda y ejecutan SPs con `coop_api_login`.
+
+Los detalles de instalacion y configuracion estan en
+`api/CoopCore.Api/README.md`.
+
+## Implementacion API inicial en .NET 10
+
+### Estructura por capas
+
+La API esta ubicada en `api/CoopCore.Api` y separa responsabilidades asi:
+
+| Capa | Responsabilidad |
+|---|---|
+| `Controllers` | Recibir HTTP requests, delegar al servicio y devolver HTTP responses. |
+| `Interfaces` | Definir contratos de servicios y del ejecutor SQL. |
+| `Services` | Validar datos minimos y coordinar llamadas a stored procedures. |
+| `Db` | Crear conexiones y ejecutar stored procedures con ADO.NET. |
+| `Models` | Definir requests y responses usados por los endpoints. |
+
+### Modulos implementados
+
+| Modulo | Archivos principales | Stored procedures |
+|---|---|---|
+| Auth | `AuthController`, `IAuthService`, `AuthService` | `coop.sp_ValidarLogin` |
+| Socios | `SociosController`, `ISocioService`, `SocioService` | `coop.sp_ConsultarSocio`, `coop.sp_RegistrarSocio` |
+| Cuentas | `CuentasController`, `ICuentaService`, `CuentaService` | `coop.sp_ConsultarSaldo`, `coop.sp_ConsultarMovimientos` |
+| Prestamos | `PrestamosController`, `IPrestamoService`, `PrestamoService` | `coop.sp_ConsultarPrestamo` |
+
+### Conexion con SQL Server
+
+`SqlConnectionFactory` lee `ConnectionStrings:CoopCoreDb` desde la configuracion.
+El archivo versionado `appsettings.json` incluye un placeholder y
+`appsettings.example.json` incluye una cadena de laboratorio. Para pruebas
+locales se debe copiar el ejemplo a `appsettings.Development.json`, que esta
+ignorado por Git.
+
+### Relacion entre API y stored procedures
+
+La API no ejecuta consultas SQL ad hoc ni implementa reglas de negocio
+financieras en C#. Cada operacion funcional pasa por un SP del esquema `coop`.
+La capa `Db.SqlExecutor` usa `CommandType.StoredProcedure`, por lo que el nombre
+del procedimiento y sus parametros son el contrato entre API y SQL Server.
+
+Para soportar `GET /api/socios/{id}` se agrego
+`coop.sp_ConsultarSocio` en `sql/04_stored_procedures.sql`. Los permisos del rol
+`rol_api_coop` se ampliaron en `sql/06_security.sql` por objeto, no por esquema,
+para cubrir solo los SPs usados por los endpoints iniciales.
+
+### Evidencia esperada
+
+1. Ejecutar scripts `sql/00` a `sql/06` en SSMS 22.
+2. Compilar con:
 
 ```text
-[db] Conectado a CoopCoreDB como coop_api_login
-[server] CoopCore API escuchando en http://localhost:3000
+dotnet build api\CoopCore.Api\CoopCore.Api.csproj
 ```
 
-Los detalles de instalacion y configuracion estan en `api/README.md`.
+3. Ejecutar con:
+
+```text
+dotnet run --project api\CoopCore.Api\CoopCore.Api.csproj --urls http://localhost:5000
+```
+
+4. Probar con `curl.exe` o Postman:
+
+- `POST /api/auth/login`
+- `GET /api/socios/SO-1001`
+- `GET /api/cuentas/CTA-10001/saldo`
+- `GET /api/cuentas/CTA-10001/movimientos`
+- `GET /api/prestamos/PR-20001`
+
+5. Confirmar desde auditoria o resultados que las operaciones pasan por stored
+   procedures y que las respuestas de error son JSON.
 
 ## Decisiones tecnicas relevantes
 
@@ -200,8 +275,8 @@ error en la capa HTTP.
 ### Permisos del API por objeto
 
 No se usa `GRANT EXECUTE ON SCHEMA::coop`, porque concederia automaticamente
-acceso a SPs futuros. Los permisos se asignan de forma explicita a los dos SPs
-que necesita la API.
+acceso a SPs futuros. Los permisos se asignan de forma explicita a los SPs que
+necesita la API inicial en .NET 10.
 
 ## Orden de ejecucion
 
