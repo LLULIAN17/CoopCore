@@ -428,6 +428,97 @@ BEGIN
 END;
 GO
 
+/* ============================================================
+   SP API: Consultar socio por identificador
+   Proposito:
+   - Exponer una consulta puntual de socio para la API .NET.
+   - Acepta cedula o SocioID como identificador de ruta.
+   Parametros:
+   - @Identificador: cedula del socio o SocioID.
+   Resultado:
+   - Datos generales y resumen de productos asociados.
+   ============================================================ */
+CREATE OR ALTER PROCEDURE coop.sp_ConsultarSocio
+    @Identificador NVARCHAR(30)
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    BEGIN TRY
+        SET @Identificador = NULLIF(LTRIM(RTRIM(@Identificador)), N'');
+
+        IF @Identificador IS NULL
+        BEGIN
+            THROW 52019, 'El parametro @Identificador es obligatorio.', 1;
+        END;
+
+        DECLARE @SocioID INT = TRY_CONVERT(INT, @Identificador);
+
+        IF EXISTS
+        (
+            SELECT 1
+            FROM coop.vw_SociosConsulta
+            WHERE Cedula = @Identificador
+        )
+        BEGIN
+            SELECT
+                SocioID,
+                Cedula,
+                Nombre,
+                Apellido,
+                Correo,
+                Telefono,
+                Direccion,
+                Estado,
+                FechaRegistro,
+                CantidadCuentas,
+                SaldoTotalCuentas,
+                CantidadPrestamos,
+                SaldoTotalPrestamos
+            FROM coop.vw_SociosConsulta
+            WHERE Cedula = @Identificador;
+
+            RETURN;
+        END;
+
+        IF @SocioID IS NOT NULL
+           AND EXISTS
+           (
+               SELECT 1
+               FROM coop.vw_SociosConsulta
+               WHERE SocioID = @SocioID
+           )
+        BEGIN
+            SELECT
+                SocioID,
+                Cedula,
+                Nombre,
+                Apellido,
+                Correo,
+                Telefono,
+                Direccion,
+                Estado,
+                FechaRegistro,
+                CantidadCuentas,
+                SaldoTotalCuentas,
+                CantidadPrestamos,
+                SaldoTotalPrestamos
+            FROM coop.vw_SociosConsulta
+            WHERE SocioID = @SocioID;
+
+            RETURN;
+        END;
+
+        THROW 52020, 'El socio indicado no existe.', 1;
+    END TRY
+    BEGIN CATCH
+        DECLARE @ErrMsgSocioConsulta NVARCHAR(4000) =
+            N'sp_ConsultarSocio: ' + ERROR_MESSAGE();
+        THROW 52055, @ErrMsgSocioConsulta, 1;
+    END CATCH;
+END;
+GO
+
 /* =====================================
    SP 1: Consultar saldo de una cuenta
    ===================================== */

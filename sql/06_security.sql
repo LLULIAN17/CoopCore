@@ -392,6 +392,8 @@ GO
    ------------------------------------- */
 IF OBJECT_ID(N'coop.sp_ConsultarSaldo', N'P') IS NOT NULL
     GRANT EXECUTE ON OBJECT::coop.sp_ConsultarSaldo TO rol_admin_coop;
+IF OBJECT_ID(N'coop.sp_ConsultarSocio', N'P') IS NOT NULL
+    GRANT EXECUTE ON OBJECT::coop.sp_ConsultarSocio TO rol_admin_coop;
 IF OBJECT_ID(N'coop.sp_ConsultarMovimientos', N'P') IS NOT NULL
     GRANT EXECUTE ON OBJECT::coop.sp_ConsultarMovimientos TO rol_admin_coop;
 IF OBJECT_ID(N'coop.sp_RegistrarSocio', N'P') IS NOT NULL
@@ -424,6 +426,8 @@ GO
    ------------------------------------- */
 IF OBJECT_ID(N'coop.sp_ConsultarSaldo', N'P') IS NOT NULL
     GRANT EXECUTE ON OBJECT::coop.sp_ConsultarSaldo TO rol_cajero_coop;
+IF OBJECT_ID(N'coop.sp_ConsultarSocio', N'P') IS NOT NULL
+    GRANT EXECUTE ON OBJECT::coop.sp_ConsultarSocio TO rol_cajero_coop;
 IF OBJECT_ID(N'coop.sp_ConsultarMovimientos', N'P') IS NOT NULL
     GRANT EXECUTE ON OBJECT::coop.sp_ConsultarMovimientos TO rol_cajero_coop;
 IF OBJECT_ID(N'coop.sp_RegistrarSocio', N'P') IS NOT NULL
@@ -483,6 +487,14 @@ IF OBJECT_ID(N'coop.sp_ConsultarSaldo', N'P') IS NOT NULL
     GRANT EXECUTE ON OBJECT::coop.sp_ConsultarSaldo TO rol_api_coop;
 IF OBJECT_ID(N'coop.sp_ValidarLogin', N'P') IS NOT NULL
     GRANT EXECUTE ON OBJECT::coop.sp_ValidarLogin TO rol_api_coop;
+IF OBJECT_ID(N'coop.sp_ConsultarSocio', N'P') IS NOT NULL
+    GRANT EXECUTE ON OBJECT::coop.sp_ConsultarSocio TO rol_api_coop;
+IF OBJECT_ID(N'coop.sp_RegistrarSocio', N'P') IS NOT NULL
+    GRANT EXECUTE ON OBJECT::coop.sp_RegistrarSocio TO rol_api_coop;
+IF OBJECT_ID(N'coop.sp_ConsultarMovimientos', N'P') IS NOT NULL
+    GRANT EXECUTE ON OBJECT::coop.sp_ConsultarMovimientos TO rol_api_coop;
+IF OBJECT_ID(N'coop.sp_ConsultarPrestamo', N'P') IS NOT NULL
+    GRANT EXECUTE ON OBJECT::coop.sp_ConsultarPrestamo TO rol_api_coop;
 
 DENY SELECT ON SCHEMA::coop TO rol_api_coop;
 DENY INSERT ON SCHEMA::coop TO rol_api_coop;
