@@ -30,6 +30,7 @@ almacenados. La API mantiene un rol delgado: solicitar operaciones a la BD.
 8. `sql/07_security_tests.sql`
 9. `sql/08_concurrency_tests.sql` (fase posterior del curso)
 10. `sql/09_indexes_optimization.sql` (fase posterior del curso)
+11. `sql/10_revision3_tests.sql` (pruebas de transacciones Revision 3)
 
 ## Nota sobre credenciales
 
@@ -41,44 +42,86 @@ No usar ni subir credenciales reales.
 La API esta implementada como capa delgada y no reemplaza la logica en base de
 datos. El frontend permanece opcional.
 
-## Entregable 2 - Stored Procedures
+## Revision 3 - Stored Procedures y transacciones
 
 ### Estado de stored procedures
 
 | Metrica | Valor |
 |---|---|
-| Total planificado | 17 SPs |
-| Minimo requerido (40%) | 7 SPs |
-| Implementados completamente (probados y documentados) | **9 SPs (~53%)** |
-| En version inicial (contrato creado, logica pendiente) | 8 SPs |
-| Cobertura total de creacion | **17/17 (100%)** |
+| Total real detectado | 18 SPs |
+| Minimo requerido (80%) | 15 SPs |
+| Implementados completamente | **18 SPs (100%)** |
+| Con transacciones explicitas | **8 SPs** |
+| Marcadores de implementacion incompleta en `sql/05_transactions.sql` | **0** |
 
-### SPs funcionales (9)
+Calculo del 80%:
 
-| # | SP | Ubicacion | Categoria |
-|---:|---|---|---|
-| 1 | `sp_ConsultarSaldo` | `sql/04_stored_procedures.sql` | Consulta |
-| 2 | `sp_ConsultarMovimientos` | `sql/04_stored_procedures.sql` | Consulta |
-| 3 | `sp_RegistrarSocio` | `sql/04_stored_procedures.sql` | Gestion |
-| 4 | `sp_CrearCuenta` | `sql/04_stored_procedures.sql` | Gestion |
-| 5 | `sp_ConsultarPrestamo` | `sql/04_stored_procedures.sql` | Consulta |
-| 6 | `sp_ValidarLogin` | `sql/04_stored_procedures.sql` | Autenticacion |
-| 7 | `sp_ObtenerUsuarioPorCredenciales` | `sql/04_stored_procedures.sql` | Autenticacion |
-| 8 | `sp_CambiarPassword` | `sql/04_stored_procedures.sql` | Autenticacion |
-| 9 | `sp_ConsultarAuditoria` | `sql/04_stored_procedures.sql` | Consulta |
+```text
+18 * 0.80 = 14.4
+Minimo requerido redondeado hacia arriba = 15 SPs completos
+Resultado actual = 18/18 SPs completos
+```
 
-### SPs en version inicial (8)
+### SPs funcionales (18)
 
-Todos se encuentran en `sql/05_transactions.sql`. Tienen nombres, parametros
-y validaciones basicas definidos, pero la logica con `BEGIN TRAN`, actualizacion
-de saldos y `ROLLBACK` se completara en la Fase de Transacciones.
+En `sql/04_stored_procedures.sql`:
 
-`sp_RegistrarDeposito`, `sp_RegistrarRetiro`, `sp_RegistrarTransferencia`,
-`sp_PagarCuota`, `sp_SolicitarPrestamo`, `sp_AprobarPrestamo`,
-`sp_RechazarPrestamo` y `sp_GenerarAmortizacion`.
+| # | SP | Categoria |
+|---:|---|---|
+| 1 | `coop.sp_ValidarLogin` | Autenticacion |
+| 2 | `coop.sp_ObtenerUsuarioPorCredenciales` | Autenticacion |
+| 3 | `coop.sp_CambiarPassword` | Autenticacion |
+| 4 | `coop.sp_ConsultarSocio` | Consulta |
+| 5 | `coop.sp_ConsultarSaldo` | Consulta |
+| 6 | `coop.sp_ConsultarMovimientos` | Consulta |
+| 7 | `coop.sp_RegistrarSocio` | Gestion |
+| 8 | `coop.sp_CrearCuenta` | Gestion |
+| 9 | `coop.sp_ConsultarPrestamo` | Consulta |
+| 10 | `coop.sp_ConsultarAuditoria` | Consulta |
 
-El estado pendiente se marca internamente con `THROW 52099`; el bloque
-`CATCH` de cada SP lo expone como error 52199 con un mensaje explicito.
+En `sql/05_transactions.sql`:
+
+| # | SP | Categoria |
+|---:|---|---|
+| 11 | `coop.sp_RegistrarDeposito` | Cuentas, transaccional |
+| 12 | `coop.sp_RegistrarRetiro` | Cuentas, transaccional |
+| 13 | `coop.sp_RegistrarTransferencia` | Cuentas, transaccional |
+| 14 | `coop.sp_PagarCuota` | Prestamos, transaccional |
+| 15 | `coop.sp_SolicitarPrestamo` | Prestamos, transaccional |
+| 16 | `coop.sp_AprobarPrestamo` | Prestamos, transaccional |
+| 17 | `coop.sp_RechazarPrestamo` | Prestamos, transaccional |
+| 18 | `coop.sp_GenerarAmortizacion` | Prestamos, transaccional |
+
+Los 8 SPs transaccionales usan `BEGIN TRY`, `SET XACT_ABORT ON`,
+`BEGIN TRANSACTION`, `COMMIT TRANSACTION`, `BEGIN CATCH`, `ROLLBACK
+TRANSACTION` cuando `@@TRANCOUNT > 0` y `THROW` para errores controlados.
+Tambien registran auditoria y, cuando aplica, movimientos en `coop.Movimiento`.
+
+### Pruebas de Revision 3
+
+`sql/10_revision3_tests.sql` incluye pruebas para:
+
+- Deposito.
+- Retiro.
+- Transferencia.
+- Solicitud de prestamo.
+- Aprobacion de prestamo.
+- Generacion de amortizacion.
+- Pago de cuota.
+- Rechazo de prestamo usando una solicitud separada.
+
+Ejemplo de ejecucion manual:
+
+```sql
+EXEC coop.sp_RegistrarDeposito
+    @NumeroCuenta = N'CTA-10001',
+    @Monto = 25.00,
+    @CedulaEmpleado = N'EM-0101',
+    @Observacion = N'Prueba manual Revision 3';
+```
+
+Los permisos de `sql/06_security.sql` ya conceden ejecucion de los SPs
+transaccionales a los roles internos correspondientes.
 
 ## Entregable 3 - API inicial en .NET 10
 
