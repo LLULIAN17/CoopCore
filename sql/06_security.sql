@@ -402,6 +402,22 @@ IF OBJECT_ID(N'coop.sp_CrearCuenta', N'P') IS NOT NULL
     GRANT EXECUTE ON OBJECT::coop.sp_CrearCuenta TO rol_admin_coop;
 IF OBJECT_ID(N'coop.sp_ConsultarPrestamo', N'P') IS NOT NULL
     GRANT EXECUTE ON OBJECT::coop.sp_ConsultarPrestamo TO rol_admin_coop;
+IF OBJECT_ID(N'coop.sp_RegistrarDeposito', N'P') IS NOT NULL
+    GRANT EXECUTE ON OBJECT::coop.sp_RegistrarDeposito TO rol_admin_coop;
+IF OBJECT_ID(N'coop.sp_RegistrarRetiro', N'P') IS NOT NULL
+    GRANT EXECUTE ON OBJECT::coop.sp_RegistrarRetiro TO rol_admin_coop;
+IF OBJECT_ID(N'coop.sp_RegistrarTransferencia', N'P') IS NOT NULL
+    GRANT EXECUTE ON OBJECT::coop.sp_RegistrarTransferencia TO rol_admin_coop;
+IF OBJECT_ID(N'coop.sp_PagarCuota', N'P') IS NOT NULL
+    GRANT EXECUTE ON OBJECT::coop.sp_PagarCuota TO rol_admin_coop;
+IF OBJECT_ID(N'coop.sp_SolicitarPrestamo', N'P') IS NOT NULL
+    GRANT EXECUTE ON OBJECT::coop.sp_SolicitarPrestamo TO rol_admin_coop;
+IF OBJECT_ID(N'coop.sp_AprobarPrestamo', N'P') IS NOT NULL
+    GRANT EXECUTE ON OBJECT::coop.sp_AprobarPrestamo TO rol_admin_coop;
+IF OBJECT_ID(N'coop.sp_RechazarPrestamo', N'P') IS NOT NULL
+    GRANT EXECUTE ON OBJECT::coop.sp_RechazarPrestamo TO rol_admin_coop;
+IF OBJECT_ID(N'coop.sp_GenerarAmortizacion', N'P') IS NOT NULL
+    GRANT EXECUTE ON OBJECT::coop.sp_GenerarAmortizacion TO rol_admin_coop;
 
 IF OBJECT_ID(N'coop.vw_CuentasResumen', N'V') IS NOT NULL
     GRANT SELECT ON OBJECT::coop.vw_CuentasResumen TO rol_admin_coop;
@@ -434,6 +450,14 @@ IF OBJECT_ID(N'coop.sp_RegistrarSocio', N'P') IS NOT NULL
     GRANT EXECUTE ON OBJECT::coop.sp_RegistrarSocio TO rol_cajero_coop;
 IF OBJECT_ID(N'coop.sp_CrearCuenta', N'P') IS NOT NULL
     GRANT EXECUTE ON OBJECT::coop.sp_CrearCuenta TO rol_cajero_coop;
+IF OBJECT_ID(N'coop.sp_RegistrarDeposito', N'P') IS NOT NULL
+    GRANT EXECUTE ON OBJECT::coop.sp_RegistrarDeposito TO rol_cajero_coop;
+IF OBJECT_ID(N'coop.sp_RegistrarRetiro', N'P') IS NOT NULL
+    GRANT EXECUTE ON OBJECT::coop.sp_RegistrarRetiro TO rol_cajero_coop;
+IF OBJECT_ID(N'coop.sp_RegistrarTransferencia', N'P') IS NOT NULL
+    GRANT EXECUTE ON OBJECT::coop.sp_RegistrarTransferencia TO rol_cajero_coop;
+IF OBJECT_ID(N'coop.sp_PagarCuota', N'P') IS NOT NULL
+    GRANT EXECUTE ON OBJECT::coop.sp_PagarCuota TO rol_cajero_coop;
 
 IF OBJECT_ID(N'coop.vw_CuentasResumen', N'V') IS NOT NULL
     GRANT SELECT ON OBJECT::coop.vw_CuentasResumen TO rol_cajero_coop;
@@ -450,6 +474,14 @@ GO
    ------------------------------------- */
 IF OBJECT_ID(N'coop.sp_ConsultarPrestamo', N'P') IS NOT NULL
     GRANT EXECUTE ON OBJECT::coop.sp_ConsultarPrestamo TO rol_oficial_credito_coop;
+IF OBJECT_ID(N'coop.sp_SolicitarPrestamo', N'P') IS NOT NULL
+    GRANT EXECUTE ON OBJECT::coop.sp_SolicitarPrestamo TO rol_oficial_credito_coop;
+IF OBJECT_ID(N'coop.sp_AprobarPrestamo', N'P') IS NOT NULL
+    GRANT EXECUTE ON OBJECT::coop.sp_AprobarPrestamo TO rol_oficial_credito_coop;
+IF OBJECT_ID(N'coop.sp_RechazarPrestamo', N'P') IS NOT NULL
+    GRANT EXECUTE ON OBJECT::coop.sp_RechazarPrestamo TO rol_oficial_credito_coop;
+IF OBJECT_ID(N'coop.sp_GenerarAmortizacion', N'P') IS NOT NULL
+    GRANT EXECUTE ON OBJECT::coop.sp_GenerarAmortizacion TO rol_oficial_credito_coop;
 
 IF OBJECT_ID(N'coop.vw_PrestamosResumen', N'V') IS NOT NULL
     GRANT SELECT ON OBJECT::coop.vw_PrestamosResumen TO rol_oficial_credito_coop;
@@ -495,6 +527,9 @@ IF OBJECT_ID(N'coop.sp_ConsultarMovimientos', N'P') IS NOT NULL
     GRANT EXECUTE ON OBJECT::coop.sp_ConsultarMovimientos TO rol_api_coop;
 IF OBJECT_ID(N'coop.sp_ConsultarPrestamo', N'P') IS NOT NULL
     GRANT EXECUTE ON OBJECT::coop.sp_ConsultarPrestamo TO rol_api_coop;
+
+-- La API .NET actual no expone endpoints transaccionales; por minimo
+-- privilegio, rol_api_coop conserva solo los SPs usados por sus endpoints.
 
 DENY SELECT ON SCHEMA::coop TO rol_api_coop;
 DENY INSERT ON SCHEMA::coop TO rol_api_coop;
@@ -610,10 +645,6 @@ BEGIN
 END;
 GO
 
--- NOTA: Los GRANT EXECUTE de los 8 SPs en sql/05_transactions.sql
--- (sp_RegistrarDeposito, sp_RegistrarRetiro, sp_RegistrarTransferencia,
--- sp_PagarCuota, sp_SolicitarPrestamo, sp_AprobarPrestamo,
--- sp_RechazarPrestamo y sp_GenerarAmortizacion) NO se conceden en este
--- entregable porque esos SPs estan en version inicial y solo lanzan
--- THROW 52099. Los permisos se concederan en la Fase de Transacciones
--- cuando esten completamente implementados.
+-- Los 8 SPs de sql/05_transactions.sql ya tienen transacciones explicitas.
+-- Sus permisos se asignan arriba por rol: caja para cajeros, prestamos para
+-- oficiales de credito y cobertura completa para administradores.
