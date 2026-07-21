@@ -165,9 +165,9 @@ EXEC coop.sp_SolicitarPrestamo
 
 ## API .NET 10
 
-No se modifico la API en esta revision porque la prioridad era SQL y
-transacciones. La API oficial sigue en `api/CoopCore.Api` y mantiene la
-arquitectura:
+La prioridad de esta revision fue SQL y transacciones. En el estado actual del
+repositorio, la API oficial queda consolidada en `api/coopcore-api` como unica
+API .NET 10 y mantiene la arquitectura:
 
 ```text
 Controllers -> Interfaces -> Services -> Db
@@ -183,6 +183,10 @@ Endpoints actuales que ejecutan stored procedures:
 | `GET /api/cuentas/{numeroCuenta}/saldo` | `coop.sp_ConsultarSaldo` |
 | `GET /api/cuentas/{numeroCuenta}/movimientos` | `coop.sp_ConsultarMovimientos` |
 | `GET /api/prestamos/{numeroPrestamo}` | `coop.sp_ConsultarPrestamo` |
+
+La implementacion vigente ya no mantiene una API Node.js/Express paralela. Esa
+version pertenece al historial del segundo avance y no debe presentarse como la
+API actual.
 
 ## Archivos modificados para Revision 3
 

@@ -6,6 +6,10 @@ Curso: **BTI23 Bases de Datos II**
 
 Fecha de cierre: **8 de junio de 2026**
 
+> Nota de vigencia: este informe documenta el estado historico del segundo
+> avance. La API Node.js descrita aqui ya no es la implementacion vigente; la
+> API oficial actual esta en `api/coopcore-api` y usa .NET 10.
+
 ## 1. Introduccion
 
 Durante el segundo avance se amplio CoopCore desde una base de datos con sus

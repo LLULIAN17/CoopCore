@@ -6,6 +6,10 @@ Curso: **BTI23 Bases de Datos II**
 
 Fecha de revision: **8 de junio de 2026**
 
+> Nota de vigencia: este plan corresponde al segundo avance. La API Node.js
+> mencionada aqui fue reemplazada; la unica API oficial actual esta en
+> `api/coopcore-api` y usa .NET 10.
+
 ## 1. Estado actual del repositorio
 
 El Entregable 1 contiene la base de datos `CoopCoreDB`, el esquema `coop`,

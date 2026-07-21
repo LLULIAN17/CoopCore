@@ -5,6 +5,10 @@ extremo antes de la sustentacion oral.
 
 Tiempo estimado: 30 minutos.
 
+> Nota de vigencia: este smoke test pertenece al Entregable 2. La seccion de
+> Node.js/Express queda como evidencia historica; la API oficial actual esta en
+> `api/coopcore-api` y usa .NET 10.
+
 ## Pre-requisitos
 
 - [ ] SQL Server esta en ejecucion y SSMS 22 esta instalado.

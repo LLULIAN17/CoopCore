@@ -12,7 +12,7 @@ implementadas en los procedimientos operativos de cuentas y prestamos.
 - Estado inicial de Git: limpio antes de cambios.
 - Base de datos objetivo: `CoopCoreDB`.
 - Esquema principal: `coop`.
-- API oficial: `api/CoopCore.Api` con .NET 10.
+- API oficial: `api/coopcore-api` con .NET 10.
 - Script principal de procedimientos base: `sql/04_stored_procedures.sql`.
 - Script principal de transacciones: `sql/05_transactions.sql`.
 - Script principal de seguridad: `sql/06_security.sql`.
@@ -88,6 +88,6 @@ Estos 8 procedimientos deben quedar con `BEGIN TRY`, `BEGIN TRANSACTION`,
   transaccionales porque estaban en version inicial.
 - `.gitignore` ya excluia `bin/`, `obj/`, `node_modules/`, logs y archivos
   locales; se agrego `.vs/` para cubrir archivos temporales de Visual Studio.
-- La API .NET 10 ya sigue la arquitectura `Controllers -> Interfaces ->
-  Services -> Db`; no se requiere modificarla para cumplir la prioridad SQL de
-  esta revision.
+- La API .NET 10 debe mantenerse como una sola implementacion oficial en
+  `api/coopcore-api`; no se debe restaurar la API Node.js/Express del segundo
+  avance como implementacion vigente.
