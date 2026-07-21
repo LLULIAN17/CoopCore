@@ -1,0 +1,53 @@
+Preparacion de CoopCoreDB desde scripts del repo
+
+
+===== Ejecutando sql\00_create_database.sql =====
+
+Changed database context to 'master'.
+La base de datos CoopCoreDB ya existe. No se realiza creacion.
+
+===== Ejecutando sql\01_schema_tables.sql =====
+
+Changed database context to 'CoopCoreDB'.
+
+===== Ejecutando sql\02_seed_data.sql =====
+
+Changed database context to 'CoopCoreDB'.
+
+===== Ejecutando sql\03_views.sql =====
+
+Changed database context to 'CoopCoreDB'.
+
+===== Ejecutando sql\04_stored_procedures.sql =====
+
+Changed database context to 'CoopCoreDB'.
+Changed database context to 'CoopCoreDB'.
+
+===== Ejecutando sql\05_transactions.sql =====
+
+Changed database context to 'CoopCoreDB'.
+
+===== Ejecutando sql\06_security.sql =====
+
+Changed database context to 'master'.
+Login ya existe: coop_admin_login
+Login ya existe: coop_cajero_login
+Login ya existe: coop_oficial_login
+Login ya existe: coop_auditor_login
+Login ya existe: coop_api_login
+Changed database context to 'CoopCoreDB'.
+Usuario ya existe (schema ajustado): coop_admin_user
+Usuario ya existe (schema ajustado): coop_cajero_user
+Usuario ya existe (schema ajustado): coop_oficial_user
+Usuario ya existe (schema ajustado): coop_auditor_user
+Usuario ya existe (schema ajustado): coop_api_user
+Rol ya existe: rol_admin_coop
+Rol ya existe: rol_cajero_coop
+Rol ya existe: rol_oficial_credito_coop
+Rol ya existe: rol_auditor_coop
+Rol ya existe: rol_api_coop
+Membresia ya existe: coop_admin_user -> rol_admin_coop
+Membresia ya existe: coop_cajero_user -> rol_cajero_coop
+Membresia ya existe: coop_oficial_user -> rol_oficial_credito_coop
+Membresia ya existe: coop_auditor_user -> rol_auditor_coop
+Membresia ya existe: coop_api_user -> rol_api_coop
