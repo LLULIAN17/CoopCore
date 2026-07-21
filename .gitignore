@@ -5,6 +5,9 @@ api/.env.*
 api/CoopCore.Api/appsettings.Development.json
 api/CoopCore.Api/appsettings.Local.json
 api/CoopCore.Api/appsettings.Local.*.json
+api/coopcore-api/coopcore-api/appsettings.Development.json
+api/coopcore-api/coopcore-api/appsettings.Local.json
+api/coopcore-api/coopcore-api/appsettings.Local.*.json
 
 # SQL Server and local connection helpers
 *.sqlproj.user
