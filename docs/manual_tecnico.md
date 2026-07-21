@@ -6,7 +6,7 @@ CoopCore usa SQL Server como nucleo de datos y logica de negocio. Las tablas,
 vistas, restricciones, permisos y stored procedures viven en `CoopCoreDB`,
 dentro del esquema `coop`.
 
-La API oficial esta en `api/CoopCore.Api` y usa .NET 10. Su estructura sigue:
+La API oficial esta en `api/coopcore-api` y usa .NET 10. Su estructura sigue:
 
 ```text
 Controllers -> Interfaces -> Services -> Db
@@ -98,7 +98,9 @@ negocio. Las operaciones se canalizan por stored procedures.
 
 ## API .NET 10
 
-La API vigente esta en `api/CoopCore.Api`.
+La API vigente esta en `api/coopcore-api`. Esta es la unica API oficial del
+repositorio; la API Node.js/Express del segundo avance queda solo como
+antecedente historico en la documentacion de esa entrega.
 
 Endpoints implementados:
 
@@ -114,6 +116,19 @@ Endpoints implementados:
 La Revision 3 no agrego endpoints transaccionales. Por minimo privilegio,
 `rol_api_coop` conserva permisos solo sobre los SPs que consumen esos endpoints.
 
+### Ejecucion local
+
+```powershell
+Copy-Item api\coopcore-api\coopcore-api\appsettings.example.json api\coopcore-api\coopcore-api\appsettings.Development.json
+dotnet restore api\coopcore-api\coopcore-api\coopcore-api.csproj
+dotnet build api\coopcore-api\coopcore-api\coopcore-api.csproj
+dotnet run --project api\coopcore-api\coopcore-api\coopcore-api.csproj --urls http://localhost:5000
+```
+
+Antes de usar endpoints de datos se debe configurar
+`ConnectionStrings:CoopCoreDb` en `appsettings.Development.json` con el login
+SQL `coop_api_login`.
+
 ## Orden de ejecucion de scripts
 
 1. `sql/00_create_database.sql`
@@ -125,11 +140,20 @@ La Revision 3 no agrego endpoints transaccionales. Por minimo privilegio,
 7. `sql/06_security.sql`
 8. `sql/07_security_tests.sql`
 9. `sql/08_concurrency_tests.sql`
-10. `sql/09_indexes_optimization.sql`
-11. `sql/10_revision3_tests.sql`
+10. `sql/09_execution_plan_baseline.sql`
+11. `sql/09_indexes_optimization.sql`
+12. `sql/10_revision3_tests.sql`
 
 Para demostrar la Revision 3, ejecutar especialmente los scripts `00` a `06`
 y luego `10_revision3_tests.sql`.
+
+Para el avance de optimizacion, ejecutar primero
+`sql/09_execution_plan_baseline.sql` con el plan real activado en SSMS y
+documentar los resultados en `docs/analisis_planes_ejecucion.md`. Los indices o
+ajustes deben aplicarse despues de esa evidencia base.
+
+Las optimizaciones implementadas estan en `sql/09_indexes_optimization.sql` y
+su justificacion se resume en `docs/optimizacion_indices.md`.
 
 ## Pruebas SQL de Revision 3
 

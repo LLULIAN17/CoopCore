@@ -1,0 +1,8 @@
+Changed database context to 'CoopCoreDB'.
+Indice ya existe: IX_Movimiento_Cuenta_Fecha
+Indice ya existe: IX_Cuenta_Socio_Saldo
+Indice ya existe: IX_Prestamo_Socio_Saldo
+Indice ya existe: IX_Cuota_Prestamo_Numero_Covering
+Indice reemplazado: IX_Auditoria_Fecha_Filtros
+Indice creado: IX_Auditoria_Accion_Fecha
+Optimizacion de indices completada. Ejecutar nuevamente sql/09_execution_plan_baseline.sql para comparar antes vs despues.

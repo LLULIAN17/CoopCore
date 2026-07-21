@@ -15,7 +15,7 @@ almacenados. La API mantiene un rol delgado: solicitar operaciones a la BD.
 - `sql/`: scripts T-SQL por fases.
 - `docs/`: documentacion tecnica y evidencias.
 - `api/`: capa delgada HTTP; la implementacion vigente esta en
-  `api/CoopCore.Api` con .NET 10.
+  `api/coopcore-api` con .NET 10.
 - `frontend/` (opcional): capa cliente opcional.
 
 ## Orden sugerido de ejecucion de scripts
@@ -29,8 +29,9 @@ almacenados. La API mantiene un rol delgado: solicitar operaciones a la BD.
 7. `sql/06_security.sql`
 8. `sql/07_security_tests.sql`
 9. `sql/08_concurrency_tests.sql` (fase posterior del curso)
-10. `sql/09_indexes_optimization.sql` (fase posterior del curso)
-11. `sql/10_revision3_tests.sql` (pruebas de transacciones Revision 3)
+10. `sql/09_execution_plan_baseline.sql` (analisis antes de optimizar)
+11. `sql/09_indexes_optimization.sql` (fase posterior del curso)
+12. `sql/10_revision3_tests.sql` (pruebas de transacciones Revision 3)
 
 ## Nota sobre credenciales
 
@@ -41,6 +42,20 @@ No usar ni subir credenciales reales.
 
 La API esta implementada como capa delgada y no reemplaza la logica en base de
 datos. El frontend permanece opcional.
+
+## Validacion de sistema completo
+
+El checklist para demostrar base de datos, seguridad, transacciones y API
+funcionando de extremo a extremo esta en
+`docs/evidencias/sistema_completo_smoke_test.md`.
+
+El analisis de planes de ejecucion antes de optimizar esta documentado en
+`docs/analisis_planes_ejecucion.md` y se apoya en
+`sql/09_execution_plan_baseline.sql`.
+
+Las optimizaciones justificadas por esa linea base estan en
+`sql/09_indexes_optimization.sql` y se explican en
+`docs/optimizacion_indices.md`.
 
 ## Revision 3 - Stored Procedures y transacciones
 
@@ -123,9 +138,9 @@ EXEC coop.sp_RegistrarDeposito
 Los permisos de `sql/06_security.sql` ya conceden ejecucion de los SPs
 transaccionales a los roles internos correspondientes.
 
-## Entregable 3 - API inicial en .NET 10
+## API oficial en .NET 10
 
-La API vigente para el tercer entregable esta en `api/CoopCore.Api` y usa
+La API vigente esta en `api/coopcore-api` y usa
 **.NET 10 + ASP.NET Core Web API**. Mantiene una arquitectura por capas:
 
 `Controllers -> Interfaces -> Services -> Db`
@@ -144,7 +159,11 @@ Endpoints implementados:
 
 Tambien ofrece `GET /api/health` como healthcheck, sin acceso a datos.
 
-La configuracion y los ejemplos de uso estan en `api/CoopCore.Api/README.md`.
+La configuracion y los ejemplos de uso estan en `api/coopcore-api/README.md`.
+
+La API Node.js/Express creada en el segundo avance fue un antecedente historico
+del proyecto. La implementacion vigente no usa Node.js, `package.json` ni
+`api/src`; queda una sola API oficial en .NET.
 
 ### Objetivo
 
@@ -164,10 +183,10 @@ valida datos minimos, llama stored procedures y devuelve respuestas JSON.
 ### Ejecutar la API
 
 ```powershell
-Copy-Item api\CoopCore.Api\appsettings.example.json api\CoopCore.Api\appsettings.Development.json
-dotnet restore api\CoopCore.Api\CoopCore.Api.csproj
-dotnet build api\CoopCore.Api\CoopCore.Api.csproj
-dotnet run --project api\CoopCore.Api\CoopCore.Api.csproj --urls http://localhost:5000
+Copy-Item api\coopcore-api\coopcore-api\appsettings.example.json api\coopcore-api\coopcore-api\appsettings.Development.json
+dotnet restore api\coopcore-api\coopcore-api\coopcore-api.csproj
+dotnet build api\coopcore-api\coopcore-api\coopcore-api.csproj
+dotnet run --project api\coopcore-api\coopcore-api\coopcore-api.csproj --urls http://localhost:5000
 ```
 
 Antes de probar endpoints de datos, ajustar
@@ -187,7 +206,3 @@ curl.exe http://localhost:5000/api/cuentas/CTA-10001/saldo
 curl.exe http://localhost:5000/api/cuentas/CTA-10001/movimientos
 curl.exe http://localhost:5000/api/prestamos/PR-20001
 ```
-
-En ambiente de desarrollo, el documento OpenAPI queda disponible en
-`/openapi/v1.json` para probar desde herramientas como Postman, Thunder Client
-o un cliente Swagger/OpenAPI.

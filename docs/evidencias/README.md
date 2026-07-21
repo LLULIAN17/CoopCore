@@ -7,6 +7,18 @@ proyecto.
 
 - `entregable_2_smoke_test.md`: checklist paso a paso para validar el
   Entregable 2 de extremo a extremo.
+- `sistema_completo_smoke_test.md`: checklist para validar base de datos,
+  seguridad, transacciones y API .NET como sistema completo funcionando.
+- `db_prepare_sqlcmd.txt`: salida local de preparacion de `CoopCoreDB` desde
+  los scripts del repositorio.
+- `planes_linea_base_sqlcmd.txt`: salida local de `STATISTICS IO/TIME` antes
+  de optimizar indices.
+- `indexes_optimization_sqlcmd.txt`: salida local de creacion idempotente de
+  indices.
+- `indexes_optimization_idempotent_sqlcmd.txt`: segunda ejecucion del script de
+  indices para demostrar que no duplica objetos.
+- `planes_post_optimizacion_sqlcmd.txt`: salida local de `STATISTICS IO/TIME`
+  despues de aplicar indices.
 - `entregable_2/`: capturas tomadas manualmente durante el smoke test del
   Entregable 2.
 
@@ -25,6 +37,8 @@ Ejemplos:
 - `entregable_2_04_security_tests_messages.png`
 - `entregable_2_08_npm_start.png`
 - `entregable_2_09_curl_login_ok.png`
+- `sistema_09_healthcheck.png`
+- `sistema_10_login_api.png`
 
 ## Evidencias esperadas para el Entregable 2
 
