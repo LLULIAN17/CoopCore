@@ -9,6 +9,8 @@ proyecto.
   Entregable 2 de extremo a extremo.
 - `sistema_completo_smoke_test.md`: checklist para validar base de datos,
   seguridad, transacciones y API .NET como sistema completo funcionando.
+- `api_http_tests.md`: guia de pruebas HTTP, Swagger y Postman para validar
+  JWT, roles, validaciones y endpoints completos de la API.
 - `db_prepare_sqlcmd.txt`: salida local de preparacion de `CoopCoreDB` desde
   los scripts del repositorio.
 - `planes_linea_base_sqlcmd.txt`: salida local de `STATISTICS IO/TIME` antes

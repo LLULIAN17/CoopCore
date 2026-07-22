@@ -1,10 +1,16 @@
 @coopcore_api_HostAddress = http://localhost:5000
 
+# Cambie runId antes de repetir pruebas que crean datos.
+@runId = 20260721A
+
+###
+
 GET {{coopcore_api_HostAddress}}/api/health
 Accept: application/json
 
 ###
 
+# @name loginCajero
 POST {{coopcore_api_HostAddress}}/api/auth/login
 Content-Type: application/json
 
@@ -15,20 +21,234 @@ Content-Type: application/json
 
 ###
 
+@tokenCajero = {{loginCajero.response.body.$.datos.token}}
+
+# @name loginOficial
+POST {{coopcore_api_HostAddress}}/api/auth/login
+Content-Type: application/json
+
+{
+  "usuario": "cmena",
+  "password": "Lab_Oficial_001"
+}
+
+###
+
+@tokenOficial = {{loginOficial.response.body.$.datos.token}}
+
+# @name loginAuditor
+POST {{coopcore_api_HostAddress}}/api/auth/login
+Content-Type: application/json
+
+{
+  "usuario": "asolis",
+  "password": "Lab_Auditor_001"
+}
+
+###
+
+@tokenAuditor = {{loginAuditor.response.body.$.datos.token}}
+
+# @name loginAdmin
+POST {{coopcore_api_HostAddress}}/api/auth/login
+Content-Type: application/json
+
+{
+  "usuario": "lporras",
+  "password": "Lab_Admin_001"
+}
+
+###
+
+@tokenAdmin = {{loginAdmin.response.body.$.datos.token}}
+
+###
+# Consultas seguras
+
 GET {{coopcore_api_HostAddress}}/api/socios/SO-1001
 Accept: application/json
+Authorization: Bearer {{tokenCajero}}
 
 ###
 
 GET {{coopcore_api_HostAddress}}/api/cuentas/CTA-10001/saldo
 Accept: application/json
+Authorization: Bearer {{tokenCajero}}
 
 ###
 
-GET {{coopcore_api_HostAddress}}/api/cuentas/CTA-10001/movimientos
+GET {{coopcore_api_HostAddress}}/api/cuentas/CTA-10001/movimientos?fechaInicio=2026-01-01&fechaFin=2026-12-31
 Accept: application/json
+Authorization: Bearer {{tokenCajero}}
 
 ###
 
 GET {{coopcore_api_HostAddress}}/api/prestamos/PR-20001
 Accept: application/json
+Authorization: Bearer {{tokenOficial}}
+
+###
+
+GET {{coopcore_api_HostAddress}}/api/auditoria?entidad=EMPLEADO
+Accept: application/json
+Authorization: Bearer {{tokenAuditor}}
+
+###
+# Pruebas negativas esperadas
+
+# Esperado: 401 porque falta token.
+GET {{coopcore_api_HostAddress}}/api/cuentas/CTA-10001/saldo
+Accept: application/json
+
+###
+
+# Esperado: 403 porque CAJERO_APP no puede consultar auditoria.
+GET {{coopcore_api_HostAddress}}/api/auditoria
+Accept: application/json
+Authorization: Bearer {{tokenCajero}}
+
+###
+
+# Esperado: 400 por validacion de modelo.
+POST {{coopcore_api_HostAddress}}/api/cuentas/depositos
+Content-Type: application/json
+Authorization: Bearer {{tokenCajero}}
+
+{
+  "numeroCuenta": "CTA-10001",
+  "monto": -1,
+  "cedulaEmpleado": "EM-0101",
+  "observacion": "Prueba negativa de validacion."
+}
+
+###
+
+# Esperado: 401 funcional, sin cambiar password real.
+POST {{coopcore_api_HostAddress}}/api/auth/cambiar-password
+Content-Type: application/json
+Authorization: Bearer {{tokenCajero}}
+
+{
+  "usuario": "mlrojas",
+  "passwordActual": "password-incorrecto-xxx",
+  "passwordNuevo": "NuevoPass_2026"
+}
+
+###
+# Operaciones con escritura
+# Ejecute esta seccion solo en base de datos de laboratorio.
+
+# @name registrarSocio
+POST {{coopcore_api_HostAddress}}/api/socios
+Content-Type: application/json
+Authorization: Bearer {{tokenCajero}}
+
+{
+  "cedula": "SO-API-{{runId}}",
+  "nombre": "Prueba",
+  "apellido": "Api",
+  "correo": "prueba.api.{{runId}}@correo.lab",
+  "telefono": "8000-{{runId}}",
+  "direccion": "Laboratorio API",
+  "cedulaEmpleadoRegistro": "EM-0101"
+}
+
+###
+
+# @name crearCuenta
+POST {{coopcore_api_HostAddress}}/api/cuentas
+Content-Type: application/json
+Authorization: Bearer {{tokenCajero}}
+
+{
+  "numeroCuenta": "CTA-API-{{runId}}",
+  "cedulaSocio": "SO-API-{{runId}}",
+  "codigoProducto": "AHO_BASICO",
+  "cedulaEmpleado": "EM-0101",
+  "saldoInicial": 100
+}
+
+###
+
+POST {{coopcore_api_HostAddress}}/api/cuentas/depositos
+Content-Type: application/json
+Authorization: Bearer {{tokenCajero}}
+
+{
+  "numeroCuenta": "CTA-API-{{runId}}",
+  "monto": 25,
+  "cedulaEmpleado": "EM-0101",
+  "observacion": "Deposito de prueba API {{runId}}."
+}
+
+###
+
+POST {{coopcore_api_HostAddress}}/api/cuentas/retiros
+Content-Type: application/json
+Authorization: Bearer {{tokenCajero}}
+
+{
+  "numeroCuenta": "CTA-API-{{runId}}",
+  "monto": 10,
+  "cedulaEmpleado": "EM-0101",
+  "observacion": "Retiro de prueba API {{runId}}."
+}
+
+###
+
+POST {{coopcore_api_HostAddress}}/api/cuentas/transferencias
+Content-Type: application/json
+Authorization: Bearer {{tokenCajero}}
+
+{
+  "numeroCuentaOrigen": "CTA-API-{{runId}}",
+  "numeroCuentaDestino": "CTA-10001",
+  "monto": 5,
+  "cedulaEmpleado": "EM-0101",
+  "observacion": "Transferencia de prueba API {{runId}}."
+}
+
+###
+
+# @name solicitarPrestamo
+POST {{coopcore_api_HostAddress}}/api/prestamos
+Content-Type: application/json
+Authorization: Bearer {{tokenOficial}}
+
+{
+  "cedulaSocio": "SO-1004",
+  "codigoProducto": "PRE_CONSUMO",
+  "montoSolicitado": 600,
+  "plazoMeses": 6,
+  "cedulaEmpleado": "EM-0102"
+}
+
+###
+
+@numeroPrestamoNuevo = {{solicitarPrestamo.response.body.$.datos.numeroPrestamo}}
+
+POST {{coopcore_api_HostAddress}}/api/prestamos/{{numeroPrestamoNuevo}}/aprobar
+Content-Type: application/json
+Authorization: Bearer {{tokenOficial}}
+
+{
+  "cedulaEmpleadoAprueba": "EM-0102"
+}
+
+###
+
+POST {{coopcore_api_HostAddress}}/api/prestamos/{{numeroPrestamoNuevo}}/amortizacion
+Accept: application/json
+Authorization: Bearer {{tokenOficial}}
+
+###
+
+POST {{coopcore_api_HostAddress}}/api/prestamos/{{numeroPrestamoNuevo}}/cuotas/1/pagos
+Content-Type: application/json
+Authorization: Bearer {{tokenCajero}}
+
+{
+  "montoPago": 100,
+  "numeroCuentaOrigen": "CTA-10001",
+  "cedulaEmpleado": "EM-0101"
+}
