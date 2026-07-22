@@ -102,19 +102,54 @@ La API vigente esta en `api/coopcore-api`. Esta es la unica API oficial del
 repositorio; la API Node.js/Express del segundo avance queda solo como
 antecedente historico en la documentacion de esa entrega.
 
-Endpoints implementados:
+La API expone endpoints para autenticacion, socios, cuentas, prestamos y
+auditoria. Los endpoints protegidos usan JWT Bearer y autorizacion por rol de
+aplicacion.
 
-| Metodo y ruta | Stored procedure |
-|---|---|
-| `POST /api/auth/login` | `coop.sp_ValidarLogin` |
-| `GET /api/socios/{id}` | `coop.sp_ConsultarSocio` |
-| `POST /api/socios` | `coop.sp_RegistrarSocio` |
-| `GET /api/cuentas/{numeroCuenta}/saldo` | `coop.sp_ConsultarSaldo` |
-| `GET /api/cuentas/{numeroCuenta}/movimientos` | `coop.sp_ConsultarMovimientos` |
-| `GET /api/prestamos/{numeroPrestamo}` | `coop.sp_ConsultarPrestamo` |
+| Metodo y ruta | Stored procedure | Roles |
+|---|---|---|
+| `GET /api/health` | No usa base de datos | Publico |
+| `POST /api/auth/login` | `coop.sp_ValidarLogin` | Publico |
+| `POST /api/auth/cambiar-password` | `coop.sp_CambiarPassword` | Todos los roles autenticados |
+| `GET /api/socios/{id}` | `coop.sp_ConsultarSocio` | `ADMIN_APP`, `CAJERO_APP` |
+| `POST /api/socios` | `coop.sp_RegistrarSocio` | `ADMIN_APP`, `CAJERO_APP` |
+| `POST /api/cuentas` | `coop.sp_CrearCuenta` | `ADMIN_APP`, `CAJERO_APP` |
+| `GET /api/cuentas/{numeroCuenta}/saldo` | `coop.sp_ConsultarSaldo` | `ADMIN_APP`, `CAJERO_APP` |
+| `GET /api/cuentas/{numeroCuenta}/movimientos` | `coop.sp_ConsultarMovimientos` | `ADMIN_APP`, `CAJERO_APP` |
+| `POST /api/cuentas/depositos` | `coop.sp_RegistrarDeposito` | `ADMIN_APP`, `CAJERO_APP` |
+| `POST /api/cuentas/retiros` | `coop.sp_RegistrarRetiro` | `ADMIN_APP`, `CAJERO_APP` |
+| `POST /api/cuentas/transferencias` | `coop.sp_RegistrarTransferencia` | `ADMIN_APP`, `CAJERO_APP` |
+| `GET /api/prestamos/{numeroPrestamo}` | `coop.sp_ConsultarPrestamo` | `ADMIN_APP`, `OFICIAL_CREDITO_APP` |
+| `POST /api/prestamos` | `coop.sp_SolicitarPrestamo` | `ADMIN_APP`, `OFICIAL_CREDITO_APP` |
+| `POST /api/prestamos/{numeroPrestamo}/aprobar` | `coop.sp_AprobarPrestamo` | `ADMIN_APP`, `OFICIAL_CREDITO_APP` |
+| `POST /api/prestamos/{numeroPrestamo}/rechazar` | `coop.sp_RechazarPrestamo` | `ADMIN_APP`, `OFICIAL_CREDITO_APP` |
+| `POST /api/prestamos/{numeroPrestamo}/amortizacion` | `coop.sp_GenerarAmortizacion` | `ADMIN_APP`, `OFICIAL_CREDITO_APP` |
+| `POST /api/prestamos/{numeroPrestamo}/cuotas/{numeroCuota}/pagos` | `coop.sp_PagarCuota` | `ADMIN_APP`, `CAJERO_APP` |
+| `GET /api/auditoria` | `coop.sp_ConsultarAuditoria` | `ADMIN_APP`, `AUDITOR_APP` |
 
-La Revision 3 no agrego endpoints transaccionales. Por minimo privilegio,
-`rol_api_coop` conserva permisos solo sobre los SPs que consumen esos endpoints.
+La API actual si expone endpoints HTTP para las operaciones transaccionales:
+deposito, retiro, transferencia, solicitud de prestamo, aprobacion, rechazo,
+generacion de amortizacion y pago de cuota. Por minimo privilegio,
+`rol_api_coop` recibe `GRANT EXECUTE` solo sobre los SPs usados por la API y
+mantiene denegado el acceso directo a tablas.
+
+### Contrato, autenticacion y errores
+
+Con la API en ejecucion, Swagger UI queda disponible en
+`http://localhost:5000/swagger` y el contrato OpenAPI en
+`http://localhost:5000/swagger/v1/swagger.json`.
+
+`POST /api/auth/login` devuelve el token JWT en `datos.token`. Para probar
+endpoints protegidos se debe enviar el encabezado:
+
+```text
+Authorization: Bearer <TOKEN>
+```
+
+Las solicitudes invalidas devuelven `400` con errores de validacion. Las
+solicitudes sin token o con token invalido devuelven `401`; las solicitudes
+autenticadas sin el rol requerido devuelven `403`. Las reglas de negocio de la
+base de datos se reportan mediante el formato comun `ApiResponse`.
 
 ### Ejecucion local
 
@@ -191,6 +226,8 @@ EXEC coop.sp_RegistrarTransferencia
   TRANSACTION` y `ROLLBACK TRANSACTION`.
 - `sql/06_security.sql` concede `GRANT EXECUTE` de los SPs transaccionales a
   los roles internos correspondientes.
+- `sql/06_security.sql` concede al rol `rol_api_coop` ejecucion solo sobre los
+  SPs consumidos por la API y mantiene denegado el acceso directo a tablas.
 - `sql/10_revision3_tests.sql` incluye ejecuciones `EXEC` para todos los SPs
   transaccionales requeridos.
 - `docs/informe_revision_3.md` resume el estado de entrega y la evidencia.

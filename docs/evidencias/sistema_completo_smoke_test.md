@@ -16,30 +16,23 @@ y la API oficial actual funcionan de forma coordinada.
 La API vigente esta en `api/coopcore-api`. No se debe crear ni restaurar una
 segunda API en Node.js, `api/src`, `package.json` ni `api/CoopCore.Api`.
 
-## Brecha identificada
+## Cobertura actual de API
 
-La API actual expone login y consultas principales, pero no expone endpoints
-HTTP para los 8 stored procedures transaccionales. Las transacciones se
-demuestran actualmente desde SQL Server con `sql/10_revision3_tests.sql`.
+La API oficial expone endpoints HTTP para autenticacion, socios, cuentas,
+prestamos y auditoria. Tambien expone las 8 operaciones transaccionales
+solicitadas: deposito, retiro, transferencia, solicitud de prestamo,
+aprobacion, rechazo, generacion de amortizacion y pago de cuota.
 
-Si el profesor solicita que deposito, retiro, transferencia y flujo de
-prestamos se ejecuten tambien desde HTTP, el siguiente cambio debe ser agregar
-endpoints transaccionales en la misma API .NET actual, sin crear otra API.
+Los endpoints protegidos requieren JWT Bearer. El login devuelve el token en
+`datos.token`; luego se envia en el encabezado:
 
-Endpoints candidatos para una fase posterior:
+```text
+Authorization: Bearer <TOKEN>
+```
 
-| Endpoint propuesto | Stored procedure |
-|---|---|
-| `POST /api/cuentas/depositos` | `coop.sp_RegistrarDeposito` |
-| `POST /api/cuentas/retiros` | `coop.sp_RegistrarRetiro` |
-| `POST /api/cuentas/transferencias` | `coop.sp_RegistrarTransferencia` |
-| `POST /api/prestamos/solicitudes` | `coop.sp_SolicitarPrestamo` |
-| `POST /api/prestamos/{numeroPrestamo}/aprobar` | `coop.sp_AprobarPrestamo` |
-| `POST /api/prestamos/{numeroPrestamo}/rechazar` | `coop.sp_RechazarPrestamo` |
-| `POST /api/prestamos/{numeroPrestamo}/amortizacion` | `coop.sp_GenerarAmortizacion` |
-| `POST /api/prestamos/{numeroPrestamo}/cuotas/{numeroCuota}/pagos` | `coop.sp_PagarCuota` |
-
-No se implementan en este smoke test; solo se deja documentada la propuesta.
+La documentacion interactiva queda en `http://localhost:5000/swagger` y la
+suite HTTP reproducible queda en
+`api/coopcore-api/coopcore-api/coopcore-api.http`.
 
 ## Pre-requisitos
 
@@ -219,75 +212,64 @@ Resultado esperado:
 
 ## 8. Probar endpoints HTTP
 
-En otra terminal:
+Opcion recomendada: ejecutar la suite completa del archivo:
+
+```text
+api/coopcore-api/coopcore-api/coopcore-api.http
+```
+
+La guia detallada esta en `docs/evidencias/api_http_tests.md`. Antes de repetir
+las pruebas de escritura, cambiar el valor `@runId` para evitar cedulas,
+cuentas o prestamos duplicados.
+
+Resultado esperado de la suite:
+
+- [ ] `GET /api/health` devuelve `200`.
+- [ ] Los logins devuelven `200` y `datos.token`.
+- [ ] Las consultas protegidas con token valido devuelven `200`.
+- [ ] Las operaciones de escritura devuelven `200` o `201`, segun el caso.
+- [ ] Las pruebas negativas devuelven `400`, `401` y `403` segun corresponda.
+- [ ] No se observan errores `500`.
+
+Prueba manual minima con `curl.exe`:
 
 ```powershell
 curl.exe -i http://localhost:5000/api/health
-```
 
-Resultado esperado:
-
-- [ ] HTTP `200`.
-- [ ] JSON con `ok: true`.
-
-Login:
-
-```powershell
 curl.exe -i -X POST http://localhost:5000/api/auth/login `
   -H "Content-Type: application/json" `
   -d '{"usuario":"mlrojas","password":"Lab_Cajero_001"}'
 ```
 
-Resultado esperado:
-
-- [ ] HTTP `200`.
-- [ ] JSON con `ok: true`.
-- [ ] Datos del empleado autenticado.
-
-Socio:
+Copiar `datos.token` de la respuesta y asignarlo en la terminal:
 
 ```powershell
-curl.exe -i http://localhost:5000/api/socios/SO-1001
+$token = "<TOKEN>"
+```
+
+Luego probar endpoints protegidos:
+
+```powershell
+curl.exe -i http://localhost:5000/api/socios/SO-1001 `
+  -H "Authorization: Bearer $token"
+
+curl.exe -i http://localhost:5000/api/cuentas/CTA-10001/saldo `
+  -H "Authorization: Bearer $token"
+
+curl.exe -i http://localhost:5000/api/cuentas/CTA-10001/movimientos `
+  -H "Authorization: Bearer $token"
+
+curl.exe -i http://localhost:5000/api/prestamos/PR-20001 `
+  -H "Authorization: Bearer $token"
 ```
 
 Resultado esperado:
 
-- [ ] HTTP `200`.
-- [ ] Datos del socio.
-
-Saldo:
-
-```powershell
-curl.exe -i http://localhost:5000/api/cuentas/CTA-10001/saldo
-```
-
-Resultado esperado:
-
-- [ ] HTTP `200`.
-- [ ] Datos de la cuenta y saldo.
-
-Movimientos:
-
-```powershell
-curl.exe -i http://localhost:5000/api/cuentas/CTA-10001/movimientos
-```
-
-Resultado esperado:
-
-- [ ] HTTP `200`.
-- [ ] Lista de movimientos.
-
-Prestamo:
-
-```powershell
-curl.exe -i http://localhost:5000/api/prestamos/PR-20001
-```
-
-Resultado esperado:
-
-- [ ] HTTP `200`.
-- [ ] Resumen del prestamo.
-- [ ] Lista de cuotas si existen.
+- [ ] Healthcheck con `200` y `ok: true`.
+- [ ] Login con `200`, `ok: true`, datos del empleado y `datos.token`.
+- [ ] Consultas protegidas con `200` usando `Authorization: Bearer`.
+- [ ] La prueba sin token devuelve `401`.
+- [ ] La prueba con rol incorrecto devuelve `403`.
 
 ## 9. Validar auditoria del API
 
@@ -328,11 +310,12 @@ sistema_07_api_build.png
 sistema_08_api_run.png
 sistema_09_healthcheck.png
 sistema_10_login_api.png
-sistema_11_socio_api.png
-sistema_12_saldo_api.png
-sistema_13_movimientos_api.png
-sistema_14_prestamo_api.png
-sistema_15_auditoria_api.png
+sistema_11_swagger_authorize.png
+sistema_12_consultas_con_jwt.png
+sistema_13_pruebas_401_403_400.png
+sistema_14_operaciones_cuentas_http.png
+sistema_15_operaciones_prestamos_http.png
+sistema_16_auditoria_api.png
 ```
 
 ## 11. Estado no ejecutado desde Codex
@@ -341,5 +324,5 @@ Desde Codex se puede verificar que la API compila con `dotnet build`. Las
 pruebas que dependen de SQL Server, SSMS, datos locales y cadena de conexion
 deben ejecutarse manualmente en el equipo del proyecto.
 
-No se debe avanzar a optimizacion de indices hasta documentar primero el
-analisis base de planes de ejecucion solicitado por el profesor.
+Para presentar la optimizacion, mostrar primero la evidencia del analisis base
+de planes de ejecucion y despues la justificacion de los indices aplicados.

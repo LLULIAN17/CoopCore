@@ -30,7 +30,7 @@ almacenados. La API mantiene un rol delgado: solicitar operaciones a la BD.
 8. `sql/07_security_tests.sql`
 9. `sql/08_concurrency_tests.sql` (fase posterior del curso)
 10. `sql/09_execution_plan_baseline.sql` (analisis antes de optimizar)
-11. `sql/09_indexes_optimization.sql` (fase posterior del curso)
+11. `sql/09_indexes_optimization.sql` (optimizacion despues de la linea base)
 12. `sql/10_revision3_tests.sql` (pruebas de transacciones Revision 3)
 
 ## Nota sobre credenciales
@@ -151,13 +151,32 @@ procedures reales mediante ADO.NET con `Microsoft.Data.SqlClient`.
 Endpoints implementados:
 
 - `POST /api/auth/login` -> `coop.sp_ValidarLogin`
+- `POST /api/auth/cambiar-password` -> `coop.sp_CambiarPassword`
 - `GET /api/socios/{id}` -> `coop.sp_ConsultarSocio`
 - `POST /api/socios` -> `coop.sp_RegistrarSocio`
-- `GET /api/cuentas/:numeroCuenta/saldo` -> `coop.sp_ConsultarSaldo`
-- `GET /api/cuentas/:numeroCuenta/movimientos` -> `coop.sp_ConsultarMovimientos`
+- `POST /api/cuentas` -> `coop.sp_CrearCuenta`
+- `GET /api/cuentas/{numeroCuenta}/saldo` -> `coop.sp_ConsultarSaldo`
+- `GET /api/cuentas/{numeroCuenta}/movimientos` -> `coop.sp_ConsultarMovimientos`
+- `POST /api/cuentas/depositos` -> `coop.sp_RegistrarDeposito`
+- `POST /api/cuentas/retiros` -> `coop.sp_RegistrarRetiro`
+- `POST /api/cuentas/transferencias` -> `coop.sp_RegistrarTransferencia`
 - `GET /api/prestamos/{numeroPrestamo}` -> `coop.sp_ConsultarPrestamo`
+- `POST /api/prestamos` -> `coop.sp_SolicitarPrestamo`
+- `POST /api/prestamos/{numeroPrestamo}/aprobar` -> `coop.sp_AprobarPrestamo`
+- `POST /api/prestamos/{numeroPrestamo}/rechazar` -> `coop.sp_RechazarPrestamo`
+- `POST /api/prestamos/{numeroPrestamo}/amortizacion` -> `coop.sp_GenerarAmortizacion`
+- `POST /api/prestamos/{numeroPrestamo}/cuotas/{numeroCuota}/pagos` -> `coop.sp_PagarCuota`
+- `GET /api/auditoria` -> `coop.sp_ConsultarAuditoria`
 
 Tambien ofrece `GET /api/health` como healthcheck, sin acceso a datos.
+
+Con la API en ejecucion, Swagger UI queda disponible en
+`http://localhost:5000/swagger` y el contrato OpenAPI en
+`http://localhost:5000/swagger/v1/swagger.json`.
+
+El login devuelve un JWT en `datos.token`. Los endpoints de socios/cuentas,
+prestamos y auditoria requieren `Authorization: Bearer <TOKEN>` y validan los
+roles `ADMIN_APP`, `CAJERO_APP`, `OFICIAL_CREDITO_APP` y `AUDITOR_APP`.
 
 La configuracion y los ejemplos de uso estan en `api/coopcore-api/README.md`.
 
@@ -175,10 +194,11 @@ valida datos minimos, llama stored procedures y devuelve respuestas JSON.
 
 | Modulo | Controller | Service | Stored procedures |
 |---|---|---|---|
-| Auth | `AuthController` | `AuthService` | `coop.sp_ValidarLogin` |
+| Auth | `AuthController` | `AuthService` | `coop.sp_ValidarLogin`, `coop.sp_CambiarPassword` |
 | Socios | `SociosController` | `SocioService` | `coop.sp_ConsultarSocio`, `coop.sp_RegistrarSocio` |
-| Cuentas | `CuentasController` | `CuentaService` | `coop.sp_ConsultarSaldo`, `coop.sp_ConsultarMovimientos` |
-| Prestamos | `PrestamosController` | `PrestamoService` | `coop.sp_ConsultarPrestamo` |
+| Cuentas | `CuentasController` | `CuentaService` | `coop.sp_CrearCuenta`, `coop.sp_ConsultarSaldo`, `coop.sp_ConsultarMovimientos`, `coop.sp_RegistrarDeposito`, `coop.sp_RegistrarRetiro`, `coop.sp_RegistrarTransferencia` |
+| Prestamos | `PrestamosController` | `PrestamoService` | `coop.sp_ConsultarPrestamo`, `coop.sp_SolicitarPrestamo`, `coop.sp_AprobarPrestamo`, `coop.sp_RechazarPrestamo`, `coop.sp_GenerarAmortizacion`, `coop.sp_PagarCuota` |
+| Auditoria | `AuditoriaController` | `AuditoriaService` | `coop.sp_ConsultarAuditoria` |
 
 ### Ejecutar la API
 
@@ -201,8 +221,17 @@ curl.exe -X POST http://localhost:5000/api/auth/login `
   -H "Content-Type: application/json" `
   -d '{"usuario":"mlrojas","password":"Lab_Cajero_001"}'
 
-curl.exe http://localhost:5000/api/socios/SO-1001
-curl.exe http://localhost:5000/api/cuentas/CTA-10001/saldo
-curl.exe http://localhost:5000/api/cuentas/CTA-10001/movimientos
-curl.exe http://localhost:5000/api/prestamos/PR-20001
+$token = "<TOKEN_DEVUELTO_EN_DATOS_TOKEN>"
+
+curl.exe http://localhost:5000/api/socios/SO-1001 `
+  -H "Authorization: Bearer $token"
+
+curl.exe http://localhost:5000/api/cuentas/CTA-10001/saldo `
+  -H "Authorization: Bearer $token"
+
+curl.exe http://localhost:5000/api/cuentas/CTA-10001/movimientos `
+  -H "Authorization: Bearer $token"
+
+curl.exe http://localhost:5000/api/prestamos/PR-20001 `
+  -H "Authorization: Bearer $token"
 ```
