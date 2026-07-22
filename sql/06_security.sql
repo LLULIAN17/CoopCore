@@ -519,17 +519,39 @@ IF OBJECT_ID(N'coop.sp_ConsultarSaldo', N'P') IS NOT NULL
     GRANT EXECUTE ON OBJECT::coop.sp_ConsultarSaldo TO rol_api_coop;
 IF OBJECT_ID(N'coop.sp_ValidarLogin', N'P') IS NOT NULL
     GRANT EXECUTE ON OBJECT::coop.sp_ValidarLogin TO rol_api_coop;
+IF OBJECT_ID(N'coop.sp_CambiarPassword', N'P') IS NOT NULL
+    GRANT EXECUTE ON OBJECT::coop.sp_CambiarPassword TO rol_api_coop;
 IF OBJECT_ID(N'coop.sp_ConsultarSocio', N'P') IS NOT NULL
     GRANT EXECUTE ON OBJECT::coop.sp_ConsultarSocio TO rol_api_coop;
 IF OBJECT_ID(N'coop.sp_RegistrarSocio', N'P') IS NOT NULL
     GRANT EXECUTE ON OBJECT::coop.sp_RegistrarSocio TO rol_api_coop;
+IF OBJECT_ID(N'coop.sp_CrearCuenta', N'P') IS NOT NULL
+    GRANT EXECUTE ON OBJECT::coop.sp_CrearCuenta TO rol_api_coop;
 IF OBJECT_ID(N'coop.sp_ConsultarMovimientos', N'P') IS NOT NULL
     GRANT EXECUTE ON OBJECT::coop.sp_ConsultarMovimientos TO rol_api_coop;
 IF OBJECT_ID(N'coop.sp_ConsultarPrestamo', N'P') IS NOT NULL
     GRANT EXECUTE ON OBJECT::coop.sp_ConsultarPrestamo TO rol_api_coop;
+IF OBJECT_ID(N'coop.sp_RegistrarDeposito', N'P') IS NOT NULL
+    GRANT EXECUTE ON OBJECT::coop.sp_RegistrarDeposito TO rol_api_coop;
+IF OBJECT_ID(N'coop.sp_RegistrarRetiro', N'P') IS NOT NULL
+    GRANT EXECUTE ON OBJECT::coop.sp_RegistrarRetiro TO rol_api_coop;
+IF OBJECT_ID(N'coop.sp_RegistrarTransferencia', N'P') IS NOT NULL
+    GRANT EXECUTE ON OBJECT::coop.sp_RegistrarTransferencia TO rol_api_coop;
+IF OBJECT_ID(N'coop.sp_PagarCuota', N'P') IS NOT NULL
+    GRANT EXECUTE ON OBJECT::coop.sp_PagarCuota TO rol_api_coop;
+IF OBJECT_ID(N'coop.sp_SolicitarPrestamo', N'P') IS NOT NULL
+    GRANT EXECUTE ON OBJECT::coop.sp_SolicitarPrestamo TO rol_api_coop;
+IF OBJECT_ID(N'coop.sp_AprobarPrestamo', N'P') IS NOT NULL
+    GRANT EXECUTE ON OBJECT::coop.sp_AprobarPrestamo TO rol_api_coop;
+IF OBJECT_ID(N'coop.sp_RechazarPrestamo', N'P') IS NOT NULL
+    GRANT EXECUTE ON OBJECT::coop.sp_RechazarPrestamo TO rol_api_coop;
+IF OBJECT_ID(N'coop.sp_GenerarAmortizacion', N'P') IS NOT NULL
+    GRANT EXECUTE ON OBJECT::coop.sp_GenerarAmortizacion TO rol_api_coop;
+IF OBJECT_ID(N'coop.sp_ConsultarAuditoria', N'P') IS NOT NULL
+    GRANT EXECUTE ON OBJECT::coop.sp_ConsultarAuditoria TO rol_api_coop;
 
--- La API .NET actual no expone endpoints transaccionales; por minimo
--- privilegio, rol_api_coop conserva solo los SPs usados por sus endpoints.
+-- Por minimo privilegio, rol_api_coop conserva solo los SPs usados por
+-- los endpoints de la API .NET y no recibe EXECUTE sobre todo el esquema.
 
 DENY SELECT ON SCHEMA::coop TO rol_api_coop;
 DENY INSERT ON SCHEMA::coop TO rol_api_coop;

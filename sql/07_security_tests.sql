@@ -313,19 +313,60 @@ END;
 GO
 
 /* ============================================================
-   CASO 11: API no puede cambiar passwords
+   CASO 11: API puede ejecutar cambio de password
    ============================================================ */
-PRINT N'CASO 11 - API intenta ejecutar sp_CambiarPassword (debe ser denegado)';
+-- Se usa password actual incorrecto para validar permiso EXECUTE sin cambiar
+-- el password real del usuario semilla.
+PRINT N'CASO 11 - API ejecuta sp_CambiarPassword con rechazo funcional esperado';
 BEGIN TRY
     EXECUTE AS USER = N'coop_api_user';
 
     EXEC coop.sp_CambiarPassword
         @NombreUsuario = N'mlrojas',
-        @PasswordActual = N'Lab_Cajero_001',
+        @PasswordActual = N'password-incorrecto-xxx',
         @PasswordNuevo = N'NuevoPass_2026';
 
     REVERT;
-    PRINT N'[ERROR] CASO 11 no genero denegacion y debia fallar.';
+    PRINT N'[ERROR] CASO 11 no genero rechazo funcional y debia fallar por password incorrecto.';
+END TRY
+BEGIN CATCH
+    DECLARE @ErrorCaso11 NVARCHAR(4000) = ERROR_MESSAGE();
+
+    BEGIN TRY
+        REVERT;
+    END TRY
+    BEGIN CATCH
+    END CATCH;
+
+    IF @ErrorCaso11 LIKE N'%permission%'
+       OR @ErrorCaso11 LIKE N'%permiso%'
+    BEGIN
+        PRINT N'[ERROR] CASO 11 fallo por permisos: ' + @ErrorCaso11;
+    END
+    ELSE
+    BEGIN
+        PRINT N'[OK] CASO 11: API tiene EXECUTE; el rechazo fue funcional: '
+            + @ErrorCaso11;
+    END;
+END CATCH;
+GO
+
+/* ============================================================
+   CASO 12: API puede consultar auditoria por SP
+   ============================================================ */
+PRINT N'CASO 12 - API ejecuta sp_ConsultarAuditoria';
+BEGIN TRY
+    EXECUTE AS USER = N'coop_api_user';
+
+    EXEC coop.sp_ConsultarAuditoria
+        @FechaInicio = NULL,
+        @FechaFin = NULL,
+        @Entidad = NULL,
+        @Accion = NULL,
+        @CedulaEmpleado = NULL;
+
+    PRINT N'[OK] CASO 12: API pudo ejecutar sp_ConsultarAuditoria.';
+    REVERT;
 END TRY
 BEGIN CATCH
     BEGIN TRY
@@ -334,7 +375,46 @@ BEGIN CATCH
     BEGIN CATCH
     END CATCH;
 
-    PRINT N'[DENEGADO ESPERADO] CASO 11: ' + ERROR_MESSAGE();
+    PRINT N'[ERROR] CASO 12 fallo: ' + ERROR_MESSAGE();
+END CATCH;
+GO
+
+/* ============================================================
+   CASO 13: API tiene permiso sobre SP transaccional
+   ============================================================ */
+-- Se usa empleado inexistente para validar EXECUTE sin registrar deposito.
+PRINT N'CASO 13 - API ejecuta sp_RegistrarDeposito con rechazo funcional esperado';
+BEGIN TRY
+    EXECUTE AS USER = N'coop_api_user';
+
+    EXEC coop.sp_RegistrarDeposito
+        @NumeroCuenta = N'CTA-10001',
+        @Monto = 1.00,
+        @CedulaEmpleado = N'EMP-INEXISTENTE',
+        @Observacion = N'Prueba de permiso sin mutacion esperada.';
+
+    REVERT;
+    PRINT N'[ERROR] CASO 13 no genero rechazo funcional y debia fallar por empleado inexistente.';
+END TRY
+BEGIN CATCH
+    DECLARE @ErrorCaso13 NVARCHAR(4000) = ERROR_MESSAGE();
+
+    BEGIN TRY
+        REVERT;
+    END TRY
+    BEGIN CATCH
+    END CATCH;
+
+    IF @ErrorCaso13 LIKE N'%permission%'
+       OR @ErrorCaso13 LIKE N'%permiso%'
+    BEGIN
+        PRINT N'[ERROR] CASO 13 fallo por permisos: ' + @ErrorCaso13;
+    END
+    ELSE
+    BEGIN
+        PRINT N'[OK] CASO 13: API tiene EXECUTE sobre SP transaccional; rechazo funcional: '
+            + @ErrorCaso13;
+    END;
 END CATCH;
 GO
 
