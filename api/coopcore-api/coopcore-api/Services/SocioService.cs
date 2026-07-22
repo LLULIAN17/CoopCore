@@ -20,7 +20,7 @@ public sealed class SocioService : ISocioService
         string id,
         CancellationToken cancellationToken = default)
     {
-        id = id.Trim();
+        id = id?.Trim() ?? string.Empty;
 
         if (string.IsNullOrWhiteSpace(id))
         {
@@ -64,11 +64,11 @@ public sealed class SocioService : ISocioService
                 StatusCodes.Status500InternalServerError,
                 "Error al ejecutar coop.sp_ConsultarSocio.");
         }
-        catch (InvalidOperationException ex)
+        catch (InvalidOperationException)
         {
             return ServiceResult<SocioResponse>.Failure(
                 StatusCodes.Status500InternalServerError,
-                ex.Message);
+                "La API no pudo procesar la respuesta del stored procedure.");
         }
     }
 
@@ -138,11 +138,11 @@ public sealed class SocioService : ISocioService
                 StatusCodes.Status500InternalServerError,
                 "Error al ejecutar coop.sp_RegistrarSocio.");
         }
-        catch (InvalidOperationException ex)
+        catch (InvalidOperationException)
         {
             return ServiceResult<SocioResponse>.Failure(
                 StatusCodes.Status500InternalServerError,
-                ex.Message);
+                "La API no pudo procesar la respuesta del stored procedure.");
         }
     }
 

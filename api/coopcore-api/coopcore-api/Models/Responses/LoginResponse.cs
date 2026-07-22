@@ -7,4 +7,6 @@ public sealed record LoginResponse(
     string? Apellido,
     string? Correo,
     string? Rol,
+    string? Token,
+    DateTimeOffset? TokenExpiraEn,
     DateTime? BloqueadoHasta);

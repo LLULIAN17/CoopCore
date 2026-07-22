@@ -11,7 +11,7 @@ public sealed record PrestamoResponse(
     decimal SaldoPendiente,
     decimal TasaInteres,
     int PlazoMeses,
-    DateTime FechaDesembolso,
+    DateTime? FechaDesembolso,
     string EstadoPrestamo,
     int CantidadCuotas,
     decimal TotalProgramado,

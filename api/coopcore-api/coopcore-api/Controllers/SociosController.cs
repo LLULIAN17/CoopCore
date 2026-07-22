@@ -1,11 +1,14 @@
 using CoopCore.Api.Interfaces;
 using CoopCore.Api.Models.Requests;
+using CoopCore.Api.Security;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace CoopCore.Api.Controllers;
 
 [ApiController]
 [Route("api/socios")]
+[Authorize(Roles = ApiRoles.Caja)]
 public sealed class SociosController : ControllerBase
 {
     private readonly ISocioService _socioService;

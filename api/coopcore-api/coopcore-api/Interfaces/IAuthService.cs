@@ -8,4 +8,8 @@ public interface IAuthService
     Task<ServiceResult<LoginResponse>> LoginAsync(
         LoginRequest request,
         CancellationToken cancellationToken = default);
+
+    Task<ServiceResult<CambiarPasswordResponse>> CambiarPasswordAsync(
+        CambiarPasswordRequest request,
+        CancellationToken cancellationToken = default);
 }
