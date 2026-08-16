@@ -89,6 +89,30 @@ Authorization: Bearer {{tokenOficial}}
 
 ###
 
+GET {{coopcore_api_HostAddress}}/api/clientes-morosos?termino=SO-1002&fechaCorte=2026-02-01&diasMoraMinimos=30&pagina=1&tamanoPagina=20
+Accept: application/json
+Authorization: Bearer {{tokenOficial}}
+
+###
+
+GET {{coopcore_api_HostAddress}}/api/cartera/dashboard?fechaCorte=2026-02-01
+Accept: application/json
+Authorization: Bearer {{tokenOficial}}
+
+###
+
+GET {{coopcore_api_HostAddress}}/api/productos-financieros?estado=ACTIVO
+Accept: application/json
+Authorization: Bearer {{tokenAdmin}}
+
+###
+
+GET {{coopcore_api_HostAddress}}/api/cobranza/alertas?fechaCorte=2026-02-01&diasProximos=30
+Accept: application/json
+Authorization: Bearer {{tokenOficial}}
+
+###
+
 GET {{coopcore_api_HostAddress}}/api/auditoria?entidad=EMPLEADO
 Accept: application/json
 Authorization: Bearer {{tokenAuditor}}
@@ -206,6 +230,38 @@ Authorization: Bearer {{tokenCajero}}
   "monto": 5,
   "cedulaEmpleado": "EM-0101",
   "observacion": "Transferencia de prueba API {{runId}}."
+}
+
+###
+
+POST {{coopcore_api_HostAddress}}/api/productos-financieros
+Content-Type: application/json
+Authorization: Bearer {{tokenAdmin}}
+
+{
+  "codigoProducto": "PRE_API_{{runId}}",
+  "nombreProducto": "Prestamo API ampliacion",
+  "tipoProducto": "PRESTAMO",
+  "tasaInteres": 12.5,
+  "montoMinimoApertura": 0,
+  "estado": "ACTIVO",
+  "cedulaEmpleado": "EM-0103"
+}
+
+###
+
+POST {{coopcore_api_HostAddress}}/api/cobranza/gestiones
+Content-Type: application/json
+Authorization: Bearer {{tokenOficial}}
+
+{
+  "numeroPrestamo": "PR-20001",
+  "cedulaEmpleado": "EM-0102",
+  "tipoGestion": "LLAMADA",
+  "resultado": "COMPROMISO_PAGO",
+  "comentario": "Cliente contactado desde la ampliacion funcional.",
+  "fechaCompromiso": "2026-02-05",
+  "montoCompromiso": 300
 }
 
 ###

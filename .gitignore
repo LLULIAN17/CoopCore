@@ -36,6 +36,9 @@ obj/
 .vs/
 dist/
 build/
+# El frontend usa este helper como codigo fuente durante `vinext build`.
+!frontend/app/build/
+!frontend/app/build/sites-vite-plugin.ts
 *.exe
 *.dll
 *.pdb

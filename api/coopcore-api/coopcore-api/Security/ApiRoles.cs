@@ -10,5 +10,6 @@ public static class ApiRoles
     public const string Todos = Admin + "," + Cajero + "," + OficialCredito + "," + Auditor;
     public const string Caja = Admin + "," + Cajero;
     public const string Credito = Admin + "," + OficialCredito;
+    public const string Operacion = Admin + "," + Cajero + "," + OficialCredito;
     public const string Auditoria = Admin + "," + Auditor;
 }

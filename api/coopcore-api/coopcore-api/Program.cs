@@ -25,6 +25,15 @@ if (configuredPort.HasValue && !hasExplicitUrls)
 }
 
 builder.Services.AddControllers();
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("Frontend", policy =>
+    {
+        policy.AllowAnyOrigin()
+            .AllowAnyHeader()
+            .AllowAnyMethod();
+    });
+});
 builder.Services.Configure<ApiBehaviorOptions>(options =>
 {
     options.InvalidModelStateResponseFactory = context =>
@@ -122,6 +131,10 @@ builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<ISocioService, SocioService>();
 builder.Services.AddScoped<ICuentaService, CuentaService>();
 builder.Services.AddScoped<IPrestamoService, PrestamoService>();
+builder.Services.AddScoped<IMorosidadService, MorosidadService>();
+builder.Services.AddScoped<ICarteraService, CarteraService>();
+builder.Services.AddScoped<IProductoFinancieroService, ProductoFinancieroService>();
+builder.Services.AddScoped<ICobranzaService, CobranzaService>();
 builder.Services.AddScoped<IAuditoriaService, AuditoriaService>();
 
 var app = builder.Build();
@@ -156,6 +169,7 @@ app.MapGet("/api/health", () => Results.Ok(new
     ts = DateTimeOffset.UtcNow
 }));
 
+app.UseCors("Frontend");
 app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();
