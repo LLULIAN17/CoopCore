@@ -16,7 +16,7 @@ almacenados. La API mantiene un rol delgado: solicitar operaciones a la BD.
 - `docs/`: documentacion tecnica y evidencias.
 - `api/`: capa delgada HTTP; la implementacion vigente esta en
   `api/coopcore-api` con .NET 10.
-- `frontend/` (opcional): capa cliente opcional.
+- `frontend/`: centro de operaciones web para cartera, morosidad, productos y cobranza.
 
 ## Orden sugerido de ejecucion de scripts
 
@@ -32,6 +32,12 @@ almacenados. La API mantiene un rol delgado: solicitar operaciones a la BD.
 10. `sql/09_execution_plan_baseline.sql` (analisis antes de optimizar)
 11. `sql/09_indexes_optimization.sql` (optimizacion despues de la linea base)
 12. `sql/10_revision3_tests.sql` (pruebas de transacciones Revision 3)
+13. `sql/11_busqueda_clientes_morosos.sql` (ampliacion de cartera vencida)
+14. `sql/12_busqueda_clientes_morosos_tests.sql` (pruebas del buscador)
+15. `sql/13_dashboard_cartera.sql` (indicadores y vencimientos de cartera)
+16. `sql/14_productos_financieros.sql` (catalogo administrable de productos)
+17. `sql/15_alertas_cobranza.sql` (alertas y seguimiento de cobro)
+18. `sql/16_ampliacion_50_tests.sql` (pruebas integrales de la ampliacion)
 
 ## Nota sobre credenciales
 
@@ -41,7 +47,22 @@ No usar ni subir credenciales reales.
 ## Nota sobre capas
 
 La API esta implementada como capa delgada y no reemplaza la logica en base de
-datos. El frontend permanece opcional.
+datos. El frontend consume esos contratos y tambien funciona con datos de
+demostracion para facilitar presentaciones sin una conexion activa.
+
+## Ampliacion funcional del 50% - 15 de agosto de 2026
+
+La linea base tenia seis modulos funcionales: autenticacion, socios, cuentas,
+prestamos, morosidad y auditoria. Esta entrega agrega tres modulos completos,
+por lo que el alcance pasa de **6 a 9 modulos (50% de crecimiento)**:
+
+1. Dashboard de cartera con indicadores, riesgo y proximos vencimientos.
+2. Gestion de productos financieros con consulta, creacion y actualizacion.
+3. Alertas de cobranza con priorizacion y registro de gestiones.
+
+Cada modulo incluye stored procedures, permisos, API .NET, interfaz web,
+pruebas SQL y documentacion. El detalle reproducible esta en
+`docs/ampliacion_funcional_50.md`.
 
 ## Validacion de sistema completo
 
@@ -161,6 +182,12 @@ Endpoints implementados:
 - `POST /api/cuentas/retiros` -> `coop.sp_RegistrarRetiro`
 - `POST /api/cuentas/transferencias` -> `coop.sp_RegistrarTransferencia`
 - `GET /api/prestamos/{numeroPrestamo}` -> `coop.sp_ConsultarPrestamo`
+- `GET /api/clientes-morosos` -> `coop.sp_BuscarClientesMorosos`
+- `GET /api/cartera/dashboard` -> `coop.sp_ConsultarDashboardCartera`
+- `GET /api/productos-financieros` -> `coop.sp_BuscarProductosFinancieros`
+- `POST|PUT /api/productos-financieros` -> `coop.sp_GuardarProductoFinanciero`
+- `GET /api/cobranza/alertas` -> `coop.sp_ConsultarAlertasCobranza`
+- `POST /api/cobranza/gestiones` -> `coop.sp_RegistrarGestionCobranza`
 - `POST /api/prestamos` -> `coop.sp_SolicitarPrestamo`
 - `POST /api/prestamos/{numeroPrestamo}/aprobar` -> `coop.sp_AprobarPrestamo`
 - `POST /api/prestamos/{numeroPrestamo}/rechazar` -> `coop.sp_RechazarPrestamo`
@@ -198,6 +225,10 @@ valida datos minimos, llama stored procedures y devuelve respuestas JSON.
 | Socios | `SociosController` | `SocioService` | `coop.sp_ConsultarSocio`, `coop.sp_RegistrarSocio` |
 | Cuentas | `CuentasController` | `CuentaService` | `coop.sp_CrearCuenta`, `coop.sp_ConsultarSaldo`, `coop.sp_ConsultarMovimientos`, `coop.sp_RegistrarDeposito`, `coop.sp_RegistrarRetiro`, `coop.sp_RegistrarTransferencia` |
 | Prestamos | `PrestamosController` | `PrestamoService` | `coop.sp_ConsultarPrestamo`, `coop.sp_SolicitarPrestamo`, `coop.sp_AprobarPrestamo`, `coop.sp_RechazarPrestamo`, `coop.sp_GenerarAmortizacion`, `coop.sp_PagarCuota` |
+| Morosidad | `ClientesMorososController` | `MorosidadService` | `coop.sp_BuscarClientesMorosos` |
+| Cartera | `CarteraController` | `CarteraService` | `coop.sp_ConsultarDashboardCartera` |
+| Productos financieros | `ProductosFinancierosController` | `ProductoFinancieroService` | `coop.sp_BuscarProductosFinancieros`, `coop.sp_GuardarProductoFinanciero` |
+| Cobranza | `CobranzaController` | `CobranzaService` | `coop.sp_ConsultarAlertasCobranza`, `coop.sp_RegistrarGestionCobranza` |
 | Auditoria | `AuditoriaController` | `AuditoriaService` | `coop.sp_ConsultarAuditoria` |
 
 ### Ejecutar la API
