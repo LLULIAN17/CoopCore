@@ -64,6 +64,19 @@ Cada modulo incluye stored procedures, permisos, API .NET, interfaz web,
 pruebas SQL y documentacion. El detalle reproducible esta en
 `docs/ampliacion_funcional_50.md`.
 
+### Vista de los modulos ampliados
+
+| Dashboard de cartera | Clientes morosos |
+|---|---|
+| ![Dashboard de cartera](docs/evidencias/interfaz/dashboard_cartera.png) | ![Buscador de clientes morosos](docs/evidencias/interfaz/clientes_morosos.png) |
+
+| Productos financieros | Cobranza |
+|---|---|
+| ![Catalogo de productos financieros](docs/evidencias/interfaz/productos_financieros.png) | ![Seguimiento de cobranza](docs/evidencias/interfaz/cobranza.png) |
+
+La interfaz es responsive, funciona con datos de demostracion y permite
+conectarse a la API mediante un JWT para consultar datos reales.
+
 ## Validacion de sistema completo
 
 El checklist para demostrar base de datos, seguridad, transacciones y API
