@@ -19,4 +19,9 @@ public sealed record RegistrarGestionCobranzaRequest(
     [Required, StringLength(30)] string? Resultado,
     [Required, StringLength(500, MinimumLength = 5)] string? Comentario,
     DateTime? FechaCompromiso,
-    [Range(typeof(decimal), "0.01", "9999999999999999.99")] decimal? MontoCompromiso);
+    [Range(
+        typeof(decimal),
+        "0.01",
+        "9999999999999999.99",
+        ParseLimitsInInvariantCulture = true)]
+    decimal? MontoCompromiso);

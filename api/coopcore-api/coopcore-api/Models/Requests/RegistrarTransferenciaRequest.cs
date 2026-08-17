@@ -10,7 +10,11 @@ public sealed record RegistrarTransferenciaRequest(
     [StringLength(30)]
     string? NumeroCuentaDestino,
     [Required]
-    [Range(typeof(decimal), "0.01", "9999999999999999.99")]
+    [Range(
+        typeof(decimal),
+        "0.01",
+        "9999999999999999.99",
+        ParseLimitsInInvariantCulture = true)]
     decimal? Monto,
     [Required]
     [StringLength(20)]

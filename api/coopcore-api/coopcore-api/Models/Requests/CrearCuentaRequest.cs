@@ -15,5 +15,9 @@ public sealed record CrearCuentaRequest(
     [Required]
     [StringLength(20)]
     string? CedulaEmpleado,
-    [Range(typeof(decimal), "0", "9999999999999999.99")]
+    [Range(
+        typeof(decimal),
+        "0",
+        "9999999999999999.99",
+        ParseLimitsInInvariantCulture = true)]
     decimal? SaldoInicial);
