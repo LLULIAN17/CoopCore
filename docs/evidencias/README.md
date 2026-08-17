@@ -21,11 +21,25 @@ proyecto.
   indices para demostrar que no duplica objetos.
 - `planes_post_optimizacion_sqlcmd.txt`: salida local de `STATISTICS IO/TIME`
   despues de aplicar indices.
+- `planes/`: diez planes XML antes/despues, comparacion numerica en CSV y
+  Markdown, y seis imagenes de evidencia. Los `.sqlplan` se abren en SSMS.
 - `entregable_2/`: capturas tomadas manualmente durante el smoke test del
   Entregable 2.
 
 La carpeta `entregable_2/` se completa cuando el equipo genere las capturas.
 Este repositorio no incluye imagenes simuladas.
+
+## Regenerar la evidencia de optimizacion
+
+Desde la raiz del repositorio y con `CoopCoreDB` instalada:
+
+```powershell
+.\scripts\capture-optimization-evidence.ps1
+python .\scripts\render-optimization-plans.py
+```
+
+La captura elimina y recrea cada indice dentro de una transaccion reversible;
+no deja cambios en los datos ni en la definicion final de la base.
 
 ## Convencion de nombres
 

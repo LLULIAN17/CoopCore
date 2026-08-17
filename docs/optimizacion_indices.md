@@ -47,22 +47,42 @@ correctamente y confirmo:
 - La seccion transaccional aplico `ROLLBACK`, por lo que las operaciones de
   medicion no quedaron permanentes.
 
-## Comparacion local posterior
+## Comparacion cuantitativa antes y despues
 
 Se ejecuto `sql/09_indexes_optimization.sql` contra `.\SQLEXPRESS` y se
 crearon cinco indices. Luego se ejecuto nuevamente
 `sql/09_execution_plan_baseline.sql`, guardando la salida como
 `docs/evidencias/planes_post_optimizacion_sqlcmd.txt`.
 
-Resultados observados con el seed pequeno:
+Las lecturas logicas salen de las ejecuciones guardadas en
+`planes_linea_base_sqlcmd.txt` y `planes_post_optimizacion_sqlcmd.txt`. El costo
+estimado sale de planes XML generados por SQL Server con `SET SHOWPLAN_XML ON`.
+Cada indice se elimina y recrea dentro de una transaccion independiente que se
+revierte al finalizar, de modo que la medicion es repetible y no cambia la base.
 
-| Caso | Observacion |
-|---|---|
-| `sp_ConsultarMovimientos` | Las lecturas sobre `Movimiento` se mantienen bajas; el indice queda preparado para crecimiento por cuenta y fecha. |
-| `sp_ConsultarSaldo` | Las lecturas sobre `Movimiento` se mantienen bajas; el indice apoya el calculo de ultimo movimiento por cuenta. |
-| `sp_ConsultarPrestamo` | La lectura de detalle de `Cuota` baja en la comparacion local, porque el nuevo indice cubre columnas del detalle. |
-| `sp_ConsultarSocio` | Las lecturas siguen bajas por el volumen del seed; los indices por `SocioID` evitan depender de escaneos grandes cuando crezcan cuentas y prestamos. |
-| `sp_ConsultarAuditoria` | El indice inicial de auditoria se ajusto a `Accion + FechaEvento` tras la comparacion post, porque el caso medido principal filtra por `LOGIN`. |
+| Indice | Lecturas antes | Lecturas despues | Delta lecturas | Costo antes | Costo despues | Delta costo | Cambio principal del plan |
+|---|---:|---:|---:|---:|---:|---:|---|
+| `IX_Movimiento_Cuenta_Fecha` | 2 | 2 | 0.00% | 0.01467280 | 0.00328680 | -77.60% | `Clustered Index Scan + Sort` pasa a `Index Seek`. |
+| `IX_Cuenta_Socio_Saldo` | 2 | 2 | 0.00% | 0.00328942 | 0.00328420 | -0.16% | `Clustered Index Scan` pasa a `Index Seek`; el seed es de cuatro cuentas. |
+| `IX_Prestamo_Socio_Saldo` | 2 | 2 | 0.00% | 0.00328942 | 0.00328420 | -0.16% | `Clustered Index Scan` pasa a `Index Seek`; el seed es de dos prestamos. |
+| `IX_Cuota_Prestamo_Numero_Covering` | 12 | 4 | -66.67% | 0.00730559 | 0.00328640 | -55.02% | Se elimina el acceso adicional al indice clustered; queda un `Index Seek` cubierto. |
+| `IX_Auditoria_Accion_Fecha` | 3 | 4 | +33.33% | 0.01474430 | 0.00330000 | -77.62% | `Clustered Index Scan + Sort` pasa a `Index Seek`; la lectura adicional es una pagina en un seed pequeno. |
+
+La evidencia muestra por que no conviene defender solo milisegundos o lecturas
+con un seed academico pequeno. En tres casos las lecturas permanecen casi
+constantes, pero el plan cambia de escaneo a busqueda y elimina ordenamientos.
+En `Cuota` coinciden la mejora estructural, la baja de lecturas y una reduccion
+de costo estimado de 55.02%.
+
+Archivos verificables:
+
+- `docs/evidencias/planes/resumen_costos_estimados.csv`: cifras completas.
+- `docs/evidencias/planes/resumen_costos_estimados.md`: tabla generada.
+- `docs/evidencias/planes/*_antes.sqlplan` y `*_despues.sqlplan`: planes XML
+  originales, abribles en SSMS.
+- `docs/evidencias/planes/*_comparacion.png`: comparaciones visuales por indice.
+- `scripts/capture-optimization-evidence.ps1`: captura reproducible.
+- `scripts/render-optimization-plans.py`: renderizado reproducible.
 
 La mejora no debe defenderse solo por milisegundos, porque el seed academico es
 pequeno. La defensa debe enfocarse en que cada indice responde a un acceso
@@ -98,18 +118,9 @@ La defensa debe explicar que el valor de los indices aparece cuando crecen
 - No se cambiaron stored procedures en esta fase para mantener el alcance
   pequeno y defendible.
 
-## Evidencia esperada para entrega
+## Evidencia disponible para entrega
 
-Guardar capturas o salidas con nombres como:
-
-```text
-planes_pre_01_statistics_io_time.png
-planes_pre_02_movimientos_plan.png
-planes_pre_03_cuotas_plan.png
-planes_pre_04_auditoria_plan.png
-planes_post_01_indices_creados.png
-planes_post_02_statistics_io_time.png
-planes_post_03_movimientos_plan.png
-planes_post_04_cuotas_plan.png
-planes_post_05_auditoria_plan.png
-```
+La carpeta `docs/evidencias/planes/` contiene diez planes XML originales, cinco
+comparaciones visuales y un resumen general. Las visualizaciones no simulan la
+interfaz de SSMS: resumen datos extraidos de los `.sqlplan`, que son la fuente
+primaria y pueden abrirse en SSMS para inspeccionar el arbol completo.
