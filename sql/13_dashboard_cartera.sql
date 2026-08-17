@@ -18,6 +18,14 @@ BEGIN
 END;
 GO
 
+/* ============================================================
+   Procedimiento: coop.sp_ConsultarDashboardCartera
+   Descripcion: Resume cartera vigente, morosidad, riesgo y vencimientos.
+   Parametros: fecha de corte opcional.
+   Resultado: indicadores, distribucion de riesgo y proximas cuotas.
+   Autor: Equipo CoopCore
+   Fecha: 2026-08-17
+   ============================================================ */
 CREATE OR ALTER PROCEDURE coop.sp_ConsultarDashboardCartera
     @FechaCorte DATE = NULL
 AS
@@ -39,16 +47,12 @@ BEGIN
         p.PrestamoID,
         p.SocioID,
         COUNT(*) AS CuotasVencidas,
-        SUM(CONVERT(DECIMAL(38,2), c.MontoCuota - c.MontoPagado)) AS MontoVencido,
-        MAX(DATEDIFF(DAY, c.FechaVencimiento, @FechaCorte)) AS DiasMoraMaximos
+        SUM(CONVERT(DECIMAL(38,2), c.MontoPendiente)) AS MontoVencido,
+        MAX(c.DiasMora) AS DiasMoraMaximos
     FROM coop.Prestamo AS p
-    INNER JOIN coop.Cuota AS c
-        ON c.PrestamoID = p.PrestamoID
+    CROSS APPLY coop.fn_ObtenerCuotasVencidas(p.PrestamoID, @FechaCorte) AS c
     WHERE p.EstadoPrestamo IN (N'ACTIVO', N'MORA')
       AND p.SaldoPendiente > 0
-      AND c.FechaVencimiento < @FechaCorte
-      AND c.MontoPagado < c.MontoCuota
-      AND c.EstadoCuota <> N'PAGADA'
     GROUP BY p.PrestamoID, p.SocioID;
 
     DECLARE @SaldoCarteraTotal DECIMAL(38,2);

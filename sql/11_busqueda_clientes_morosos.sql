@@ -42,6 +42,14 @@ BEGIN
 END;
 GO
 
+/* ============================================================
+   Procedimiento: coop.sp_BuscarClientesMorosos
+   Descripcion: Busca y pagina socios con cuotas vencidas a una fecha de corte.
+   Parametros: termino, fecha de corte, dias minimos, pagina y tamano de pagina.
+   Resultado: resumen y detalle paginado de clientes morosos.
+   Autor: Equipo CoopCore
+   Fecha: 2026-08-17
+   ============================================================ */
 CREATE OR ALTER PROCEDURE coop.sp_BuscarClientesMorosos
     @Termino NVARCHAR(160) = NULL,
     @FechaCorte DATE = NULL,
@@ -117,19 +125,16 @@ BEGIN
         COUNT(*) AS CantidadCuotasVencidas,
         MIN(c.FechaVencimiento) AS FechaPrimeraCuotaVencida,
         MAX(c.FechaVencimiento) AS FechaUltimaCuotaVencida,
-        DATEDIFF(DAY, MIN(c.FechaVencimiento), @FechaCorte) AS DiasMoraMaximos,
-        SUM(CONVERT(DECIMAL(38,2), c.MontoCuota - c.MontoPagado)) AS MontoTotalMora,
+        MAX(c.DiasMora) AS DiasMoraMaximos,
+        SUM(CONVERT(DECIMAL(38,2), c.MontoPendiente)) AS MontoTotalMora,
         p.SaldoPendiente
     FROM coop.Prestamo AS p
     INNER JOIN coop.Socio AS s
         ON s.SocioID = p.SocioID
-    INNER JOIN coop.Cuota AS c
-        ON c.PrestamoID = p.PrestamoID
+    CROSS APPLY coop.fn_ObtenerCuotasVencidas(p.PrestamoID, @FechaCorte) AS c
     WHERE p.EstadoPrestamo IN (N'ACTIVO', N'MORA')
       AND p.SaldoPendiente > 0
       AND c.FechaVencimiento <= @FechaVencimientoMaxima
-      AND c.EstadoCuota <> N'PAGADA'
-      AND c.MontoPagado < c.MontoCuota
       AND
       (
           @Patron IS NULL

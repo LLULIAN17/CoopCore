@@ -58,6 +58,14 @@ BEGIN
 END;
 GO
 
+/* ============================================================
+   Procedimiento: coop.sp_ConsultarAlertasCobranza
+   Descripcion: Prioriza cuotas vencidas o proximas para gestion de cobro.
+   Parametros: fecha de corte, horizonte de dias y filtro de vencidas.
+   Resultado: alertas con contacto, prioridad, mora y ultima gestion.
+   Autor: Equipo CoopCore
+   Fecha: 2026-08-17
+   ============================================================ */
 CREATE OR ALTER PROCEDURE coop.sp_ConsultarAlertasCobranza
     @FechaCorte DATE = NULL,
     @DiasProximos INT = 7,
@@ -102,6 +110,14 @@ BEGIN
             THEN DATEDIFF(DAY, @FechaCorte, c.FechaVencimiento)
             ELSE 0
         END AS DiasParaVencer,
+        coop.fn_CalcularMoraCuota
+        (
+            c.MontoCuota,
+            c.MontoPagado,
+            c.FechaVencimiento,
+            @FechaCorte,
+            CONVERT(DECIMAL(9,6), 0.001)
+        ) AS MoraEstimada,
         ug.FechaGestion AS UltimaGestionFecha,
         ug.TipoGestion AS UltimaGestionTipo,
         ug.Resultado AS UltimaGestionResultado,
@@ -141,6 +157,14 @@ BEGIN
 END;
 GO
 
+/* ============================================================
+   Procedimiento: coop.sp_RegistrarGestionCobranza
+   Descripcion: Registra una gestion de cobro y su evento de auditoria.
+   Parametros: prestamo, empleado, tipo, resultado, comentario y compromiso.
+   Resultado: detalle de la gestion creada.
+   Autor: Equipo CoopCore
+   Fecha: 2026-08-17
+   ============================================================ */
 CREATE OR ALTER PROCEDURE coop.sp_RegistrarGestionCobranza
     @NumeroPrestamo NVARCHAR(30),
     @CedulaEmpleado NVARCHAR(20),
