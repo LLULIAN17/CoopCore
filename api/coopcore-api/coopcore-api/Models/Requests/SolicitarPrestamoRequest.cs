@@ -10,7 +10,11 @@ public sealed record SolicitarPrestamoRequest(
     [StringLength(20)]
     string? CodigoProducto,
     [Required]
-    [Range(typeof(decimal), "0.01", "9999999999999999.99")]
+    [Range(
+        typeof(decimal),
+        "0.01",
+        "9999999999999999.99",
+        ParseLimitsInInvariantCulture = true)]
     decimal? MontoSolicitado,
     [Required]
     [Range(1, int.MaxValue)]

@@ -30,12 +30,17 @@ GO
    Proposito:
    - Aumentar el saldo de una cuenta activa.
    - Registrar movimiento y auditoria dentro de una transaccion explicita.
+   Parametros OUTPUT: @NuevoSaldo y @NuevoMovimientoID.
+   Autor: Equipo CoopCore
+   Fecha: 2026-08-17
    ============================================================ */
 CREATE OR ALTER PROCEDURE coop.sp_RegistrarDeposito
     @NumeroCuenta NVARCHAR(30),
     @Monto DECIMAL(18,2),
     @CedulaEmpleado NVARCHAR(20),
-    @Observacion NVARCHAR(300) = NULL
+    @Observacion NVARCHAR(300) = NULL,
+    @NuevoSaldo DECIMAL(18,2) = NULL OUTPUT,
+    @NuevoMovimientoID BIGINT = NULL OUTPUT
 AS
 BEGIN
     SET NOCOUNT ON;
@@ -124,6 +129,8 @@ BEGIN
         );
 
         SET @MovimientoID = CONVERT(BIGINT, SCOPE_IDENTITY());
+        SET @NuevoMovimientoID = @MovimientoID;
+        SET @NuevoSaldo = @SaldoNuevo;
 
         INSERT INTO coop.Auditoria
         (
@@ -150,12 +157,12 @@ BEGIN
 
         SELECT
             N'DEPOSITO_REGISTRADO' AS Resultado,
-            @MovimientoID AS MovimientoID,
+            @NuevoMovimientoID AS MovimientoID,
             @Referencia AS Referencia,
             @NumeroCuenta AS NumeroCuenta,
             @SaldoAnterior AS SaldoAnterior,
             @Monto AS MontoDepositado,
-            @SaldoNuevo AS SaldoNuevo;
+            @NuevoSaldo AS SaldoNuevo;
     END TRY
     BEGIN CATCH
         IF @@TRANCOUNT > 0
@@ -175,6 +182,8 @@ GO
    Proposito:
    - Disminuir el saldo de una cuenta activa con saldo suficiente.
    - Registrar movimiento y auditoria dentro de una transaccion explicita.
+   Autor: Equipo CoopCore
+   Fecha: 2026-08-17
    ============================================================ */
 CREATE OR ALTER PROCEDURE coop.sp_RegistrarRetiro
     @NumeroCuenta NVARCHAR(30),
@@ -325,13 +334,18 @@ GO
    Proposito:
    - Mover fondos entre dos cuentas activas con bloqueos consistentes.
    - Registrar dos movimientos y auditoria en una sola transaccion.
+   Parametros OUTPUT: identificadores de los movimientos de salida y entrada.
+   Autor: Equipo CoopCore
+   Fecha: 2026-08-17
    ============================================================ */
 CREATE OR ALTER PROCEDURE coop.sp_RegistrarTransferencia
     @NumeroCuentaOrigen NVARCHAR(30),
     @NumeroCuentaDestino NVARCHAR(30),
     @Monto DECIMAL(18,2),
     @CedulaEmpleado NVARCHAR(20),
-    @Observacion NVARCHAR(300) = NULL
+    @Observacion NVARCHAR(300) = NULL,
+    @MovimientoSalidaID BIGINT = NULL OUTPUT,
+    @MovimientoEntradaID BIGINT = NULL OUTPUT
 AS
 BEGIN
     SET NOCOUNT ON;
@@ -373,9 +387,6 @@ BEGIN
         DECLARE @SaldoOrigenNuevo DECIMAL(18,2);
         DECLARE @SaldoDestinoNuevo DECIMAL(18,2);
         DECLARE @Referencia NVARCHAR(50);
-        DECLARE @MovimientoSalidaID BIGINT;
-        DECLARE @MovimientoEntradaID BIGINT;
-
         DECLARE @CuentasTransferencia TABLE
         (
             NumeroCuenta NVARCHAR(30) NOT NULL PRIMARY KEY,
@@ -562,6 +573,8 @@ GO
    Proposito:
    - Aplicar un pago a una cuota por pagar o parcial.
    - Debitar la cuenta origen y actualizar saldos de prestamo.
+   Autor: Equipo CoopCore
+   Fecha: 2026-08-17
    ============================================================ */
 CREATE OR ALTER PROCEDURE coop.sp_PagarCuota
     @NumeroPrestamo NVARCHAR(30),
@@ -824,13 +837,18 @@ GO
    Proposito:
    - Crear una solicitud de prestamo para un socio activo.
    - Generar un numero de prestamo unico dentro de la transaccion.
+   Parametros OUTPUT: @NuevoPrestamoID y @NuevoNumeroPrestamo.
+   Autor: Equipo CoopCore
+   Fecha: 2026-08-17
    ============================================================ */
 CREATE OR ALTER PROCEDURE coop.sp_SolicitarPrestamo
     @CedulaSocio NVARCHAR(20),
     @CodigoProducto NVARCHAR(20),
     @MontoSolicitado DECIMAL(18,2),
     @PlazoMeses INT,
-    @CedulaEmpleado NVARCHAR(20)
+    @CedulaEmpleado NVARCHAR(20),
+    @NuevoPrestamoID INT = NULL OUTPUT,
+    @NuevoNumeroPrestamo NVARCHAR(30) = NULL OUTPUT
 AS
 BEGIN
     SET NOCOUNT ON;
@@ -948,6 +966,8 @@ BEGIN
         );
 
         SET @PrestamoID = CONVERT(INT, SCOPE_IDENTITY());
+        SET @NuevoPrestamoID = @PrestamoID;
+        SET @NuevoNumeroPrestamo = @NumeroPrestamo;
 
         INSERT INTO coop.Auditoria
         (
@@ -973,8 +993,8 @@ BEGIN
 
         SELECT
             N'PRESTAMO_SOLICITADO' AS Resultado,
-            @PrestamoID AS PrestamoID,
-            @NumeroPrestamo AS NumeroPrestamo,
+            @NuevoPrestamoID AS PrestamoID,
+            @NuevoNumeroPrestamo AS NumeroPrestamo,
             @CedulaSocio AS CedulaSocio,
             @CodigoProducto AS CodigoProducto,
             @MontoSolicitado AS MontoOriginal,
@@ -1001,6 +1021,8 @@ GO
    Proposito:
    - Cambiar una solicitud de prestamo a ACTIVO.
    - Registrar empleado aprobador, fecha de desembolso y auditoria.
+   Autor: Equipo CoopCore
+   Fecha: 2026-08-17
    ============================================================ */
 CREATE OR ALTER PROCEDURE coop.sp_AprobarPrestamo
     @NumeroPrestamo NVARCHAR(30),
@@ -1117,6 +1139,8 @@ GO
    Proposito:
    - Cancelar una solicitud de prestamo con motivo obligatorio.
    - Usar CANCELADO porque el modelo actual no define estado RECHAZADO.
+   Autor: Equipo CoopCore
+   Fecha: 2026-08-17
    ============================================================ */
 CREATE OR ALTER PROCEDURE coop.sp_RechazarPrestamo
     @NumeroPrestamo NVARCHAR(30),
@@ -1227,6 +1251,8 @@ GO
    Proposito:
    - Generar cuotas para un prestamo ACTIVO sin cuotas previas.
    - Ajustar la ultima cuota para cuadrar con el saldo restante.
+   Autor: Equipo CoopCore
+   Fecha: 2026-08-17
    ============================================================ */
 CREATE OR ALTER PROCEDURE coop.sp_GenerarAmortizacion
     @NumeroPrestamo NVARCHAR(30)

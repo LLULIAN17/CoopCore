@@ -45,6 +45,8 @@ GO
    - OK: credenciales validas y datos del empleado.
    - FALLO: credenciales invalidas o usuario inactivo/sin credenciales.
    - BLOQUEADO: cuenta dentro del periodo de bloqueo temporal.
+   Autor: Equipo CoopCore
+   Fecha: 2026-08-17
    ============================================================ */
 CREATE OR ALTER PROCEDURE coop.sp_ValidarLogin
     @NombreUsuario NVARCHAR(50),
@@ -270,6 +272,8 @@ GO
    Resultado:
    - Una fila con datos del empleado si las credenciales coinciden.
    - Resultset vacio si las credenciales no coinciden.
+   Autor: Equipo CoopCore
+   Fecha: 2026-08-17
    ============================================================ */
 CREATE OR ALTER PROCEDURE coop.sp_ObtenerUsuarioPorCredenciales
     @NombreUsuario NVARCHAR(50),
@@ -324,6 +328,8 @@ GO
    - @PasswordNuevo: nuevo password, minimo 8 caracteres.
    Resultado:
    - OK: password actualizado y evento registrado en auditoria.
+   Autor: Equipo CoopCore
+   Fecha: 2026-08-17
    ============================================================ */
 CREATE OR ALTER PROCEDURE coop.sp_CambiarPassword
     @NombreUsuario NVARCHAR(50),
@@ -437,6 +443,8 @@ GO
    - @Identificador: cedula del socio o SocioID.
    Resultado:
    - Datos generales y resumen de productos asociados.
+   Autor: Equipo CoopCore
+   Fecha: 2026-08-17
    ============================================================ */
 CREATE OR ALTER PROCEDURE coop.sp_ConsultarSocio
     @Identificador NVARCHAR(30)
@@ -519,9 +527,13 @@ BEGIN
 END;
 GO
 
-/* =====================================
+/* ============================================================
    SP 1: Consultar saldo de una cuenta
-   ===================================== */
+   Descripcion: Devuelve saldo, socio, producto y ultimo movimiento.
+   Parametros: @NumeroCuenta.
+   Autor: Equipo CoopCore
+   Fecha: 2026-08-17
+   ============================================================ */
 CREATE OR ALTER PROCEDURE coop.sp_ConsultarSaldo
     @NumeroCuenta NVARCHAR(30)
 AS
@@ -572,9 +584,13 @@ BEGIN
 END;
 GO
 
-/* =========================================
+/* ============================================================
    SP 2: Consultar movimientos de una cuenta
-   ========================================= */
+   Descripcion: Consulta el historial por cuenta y rango de fechas.
+   Parametros: @NumeroCuenta, @FechaInicio y @FechaFin.
+   Autor: Equipo CoopCore
+   Fecha: 2026-08-17
+   ============================================================ */
 CREATE OR ALTER PROCEDURE coop.sp_ConsultarMovimientos
     @NumeroCuenta NVARCHAR(30),
     @FechaInicio DATETIME2 = NULL,
@@ -625,9 +641,13 @@ BEGIN
 END;
 GO
 
-/* =====================================
+/* ============================================================
    SP 3: Registrar socio en la cooperativa
-   ===================================== */
+   Descripcion: Crea un socio con validaciones y auditoria.
+   Parametros: datos personales y cedula del empleado responsable.
+   Autor: Equipo CoopCore
+   Fecha: 2026-08-17
+   ============================================================ */
 CREATE OR ALTER PROCEDURE coop.sp_RegistrarSocio
     @Cedula NVARCHAR(20),
     @Nombre NVARCHAR(80),
@@ -728,9 +748,13 @@ BEGIN
 END;
 GO
 
-/* =====================================
+/* ============================================================
    SP 4: Crear cuenta de ahorro para socio
-   ===================================== */
+   Descripcion: Abre una cuenta y registra el deposito inicial opcional.
+   Parametros: socio, producto, empleado y saldo inicial.
+   Autor: Equipo CoopCore
+   Fecha: 2026-08-17
+   ============================================================ */
 CREATE OR ALTER PROCEDURE coop.sp_CrearCuenta
     @NumeroCuenta NVARCHAR(30),
     @CedulaSocio NVARCHAR(20),
@@ -884,9 +908,13 @@ BEGIN
 END;
 GO
 
-/* =====================================
+/* ============================================================
    SP 5: Consultar prestamo por numero
-   ===================================== */
+   Descripcion: Devuelve resumen y calendario de cuotas del prestamo.
+   Parametros: @NumeroPrestamo.
+   Autor: Equipo CoopCore
+   Fecha: 2026-08-17
+   ============================================================ */
 CREATE OR ALTER PROCEDURE coop.sp_ConsultarPrestamo
     @NumeroPrestamo NVARCHAR(30)
 AS
@@ -963,6 +991,8 @@ GO
    - @CedulaEmpleado: empleado asociado al evento.
    Resultado:
    - Eventos coincidentes ordenados del mas reciente al mas antiguo.
+   Autor: Equipo CoopCore
+   Fecha: 2026-08-17
    ============================================================ */
 CREATE OR ALTER PROCEDURE coop.sp_ConsultarAuditoria
     @FechaInicio DATETIME2 = NULL,

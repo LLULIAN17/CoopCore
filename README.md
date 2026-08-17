@@ -23,21 +23,35 @@ almacenados. La API mantiene un rol delgado: solicitar operaciones a la BD.
 1. `sql/00_create_database.sql`
 2. `sql/01_schema_tables.sql`
 3. `sql/02_seed_data.sql`
-4. `sql/03_views.sql`
-5. `sql/04_stored_procedures.sql`
-6. `sql/05_transactions.sql`
-7. `sql/06_security.sql`
-8. `sql/07_security_tests.sql`
-9. `sql/08_concurrency_tests.sql` (fase posterior del curso)
-10. `sql/09_execution_plan_baseline.sql` (analisis antes de optimizar)
-11. `sql/09_indexes_optimization.sql` (optimizacion despues de la linea base)
-12. `sql/10_revision3_tests.sql` (pruebas de transacciones Revision 3)
-13. `sql/11_busqueda_clientes_morosos.sql` (ampliacion de cartera vencida)
-14. `sql/12_busqueda_clientes_morosos_tests.sql` (pruebas del buscador)
-15. `sql/13_dashboard_cartera.sql` (indicadores y vencimientos de cartera)
-16. `sql/14_productos_financieros.sql` (catalogo administrable de productos)
-17. `sql/15_alertas_cobranza.sql` (alertas y seguimiento de cobro)
-18. `sql/16_ampliacion_50_tests.sql` (pruebas integrales de la ampliacion)
+4. `sql/03_functions.sql` (funciones de mora y cuotas vencidas)
+5. `sql/03_views.sql`
+6. `sql/04_stored_procedures.sql`
+7. `sql/05_transactions.sql`
+8. `sql/06_security.sql`
+9. `sql/07_security_tests.sql`
+10. `sql/08_concurrency_tests.sql` (fase posterior del curso)
+11. `sql/09_execution_plan_baseline.sql` (analisis antes de optimizar)
+12. `sql/09_indexes_optimization.sql` (optimizacion despues de la linea base)
+13. `sql/10_revision3_tests.sql` (pruebas de transacciones Revision 3)
+14. `sql/11_busqueda_clientes_morosos.sql` (ampliacion de cartera vencida)
+15. `sql/12_busqueda_clientes_morosos_tests.sql` (pruebas del buscador)
+16. `sql/13_dashboard_cartera.sql` (indicadores y vencimientos de cartera)
+17. `sql/14_productos_financieros.sql` (catalogo administrable de productos)
+18. `sql/15_alertas_cobranza.sql` (alertas y seguimiento de cobro)
+19. `sql/16_ampliacion_50_tests.sql` (pruebas integrales de la ampliacion)
+20. `sql/17_entrega_final_tests.sql` (funciones y parametros OUTPUT)
+
+## Cumplimiento SQL de entrega final
+
+- `coop.fn_CalcularMoraCuota` centraliza el calculo de mora estimada y se usa
+  desde `coop.sp_ConsultarAlertasCobranza`.
+- `coop.fn_ObtenerCuotasVencidas` devuelve una tabla reutilizable y se usa
+  desde `coop.sp_BuscarClientesMorosos` y
+  `coop.sp_ConsultarDashboardCartera`.
+- `coop.sp_RegistrarDeposito`, `coop.sp_RegistrarTransferencia` y
+  `coop.sp_SolicitarPrestamo` exponen parametros `OUTPUT` opcionales sin romper
+  los result sets consumidos por la API.
+- Los 24 stored procedures incluyen autor, fecha y `SET NOCOUNT ON`.
 
 ## Nota sobre credenciales
 

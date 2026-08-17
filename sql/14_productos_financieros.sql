@@ -6,6 +6,14 @@
 USE CoopCoreDB;
 GO
 
+/* ============================================================
+   Procedimiento: coop.sp_BuscarProductosFinancieros
+   Descripcion: Consulta el catalogo financiero y sus indicadores de uso.
+   Parametros: termino, tipo de producto y estado opcionales.
+   Resultado: productos con cantidad de cuentas, prestamos y saldo de cartera.
+   Autor: Equipo CoopCore
+   Fecha: 2026-08-17
+   ============================================================ */
 CREATE OR ALTER PROCEDURE coop.sp_BuscarProductosFinancieros
     @Termino NVARCHAR(120) = NULL,
     @TipoProducto NVARCHAR(30) = NULL,
@@ -67,6 +75,14 @@ BEGIN
 END;
 GO
 
+/* ============================================================
+   Procedimiento: coop.sp_GuardarProductoFinanciero
+   Descripcion: Crea o actualiza un producto financiero con auditoria.
+   Parametros: datos del producto y cedula del empleado responsable.
+   Resultado: detalle del producto guardado.
+   Autor: Equipo CoopCore
+   Fecha: 2026-08-17
+   ============================================================ */
 CREATE OR ALTER PROCEDURE coop.sp_GuardarProductoFinanciero
     @ProductoFinancieroID INT = NULL,
     @CodigoProducto NVARCHAR(20),
