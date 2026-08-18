@@ -53,6 +53,18 @@ almacenados. La API mantiene un rol delgado: solicitar operaciones a la BD.
   los result sets consumidos por la API.
 - Los 24 stored procedures incluyen autor, fecha y `SET NOCOUNT ON`.
 
+## Manual tecnico final
+
+El entregable consolidado esta en
+[`docs/CoopCore_Manual_Tecnico.pdf`](docs/CoopCore_Manual_Tecnico.pdf). Tiene
+38 paginas verificadas e incluye arquitectura, diagrama ER, diccionario de las
+10 tablas, funciones, stored procedures, transacciones, seguridad, comparacion
+de planes, API, instalacion, pruebas y guia de defensa. Se regenera con:
+
+```powershell
+python .\scripts\generate-technical-manual.py
+```
+
 ## Nota sobre credenciales
 
 Las contrasenas usadas en scripts de seguridad son solo de laboratorio.
@@ -111,10 +123,11 @@ Las optimizaciones justificadas por esa linea base estan en
 
 | Metrica | Valor |
 |---|---|
-| Total real detectado | 18 SPs |
+| Stored procedures requeridos por la linea base | 18 SPs |
 | Minimo requerido (80%) | 15 SPs |
-| Implementados completamente | **18 SPs (100%)** |
-| Con transacciones explicitas | **8 SPs** |
+| Total real actual | **24 SPs** |
+| Implementados completamente | **24 SPs (100%)** |
+| Con transacciones explicitas | **10 SPs** |
 | Marcadores de implementacion incompleta en `sql/05_transactions.sql` | **0** |
 
 Calculo del 80%:
@@ -122,10 +135,10 @@ Calculo del 80%:
 ```text
 18 * 0.80 = 14.4
 Minimo requerido redondeado hacia arriba = 15 SPs completos
-Resultado actual = 18/18 SPs completos
+Resultado actual = 24/24 SPs completos
 ```
 
-### SPs funcionales (18)
+### SPs funcionales (24)
 
 En `sql/04_stored_procedures.sql`:
 
@@ -154,8 +167,14 @@ En `sql/05_transactions.sql`:
 | 16 | `coop.sp_AprobarPrestamo` | Prestamos, transaccional |
 | 17 | `coop.sp_RechazarPrestamo` | Prestamos, transaccional |
 | 18 | `coop.sp_GenerarAmortizacion` | Prestamos, transaccional |
+| 19 | `coop.sp_BuscarClientesMorosos` | Morosidad |
+| 20 | `coop.sp_ConsultarDashboardCartera` | Cartera |
+| 21 | `coop.sp_BuscarProductosFinancieros` | Productos |
+| 22 | `coop.sp_GuardarProductoFinanciero` | Productos, transaccional |
+| 23 | `coop.sp_ConsultarAlertasCobranza` | Cobranza |
+| 24 | `coop.sp_RegistrarGestionCobranza` | Cobranza, transaccional |
 
-Los 8 SPs transaccionales usan `BEGIN TRY`, `SET XACT_ABORT ON`,
+Los SPs transaccionales usan `BEGIN TRY`, `SET XACT_ABORT ON`,
 `BEGIN TRANSACTION`, `COMMIT TRANSACTION`, `BEGIN CATCH`, `ROLLBACK
 TRANSACTION` cuando `@@TRANCOUNT > 0` y `THROW` para errores controlados.
 Tambien registran auditoria y, cuando aplica, movimientos en `coop.Movimiento`.
