@@ -109,6 +109,18 @@ El checklist para demostrar base de datos, seguridad, transacciones y API
 funcionando de extremo a extremo esta en
 `docs/evidencias/sistema_completo_smoke_test.md`.
 
+La validacion automatizada final se puede repetir con:
+
+```powershell
+.\scripts\test-clean-install.ps1
+.\scripts\test-system-smoke.ps1
+```
+
+Las ejecuciones verificadas del 17 de agosto de 2026 estan en
+`docs/evidencias/instalacion_limpia_20260817.txt` y
+`docs/evidencias/sistema_completo_20260817.txt`; ambas terminaron con
+`RESULTADO FINAL: APROBADO`.
+
 El analisis de planes de ejecucion antes de optimizar esta documentado en
 `docs/analisis_planes_ejecucion.md` y se apoya en
 `sql/09_execution_plan_baseline.sql`.

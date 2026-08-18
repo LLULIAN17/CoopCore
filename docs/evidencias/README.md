@@ -11,6 +11,10 @@ proyecto.
   seguridad, transacciones y API .NET como sistema completo funcionando.
 - `api_http_tests.md`: guia de pruebas HTTP, Swagger y Postman para validar
   JWT, roles, validaciones y endpoints completos de la API.
+- `instalacion_limpia_20260817.txt`: salida real de una instalacion aislada de
+  los 20 scripts, con conteos finales y limpieza de la base temporal.
+- `sistema_completo_20260817.txt`: salida real del smoke test de API, JWT,
+  roles, lecturas y escritura reversible contra SQL Server.
 - `db_prepare_sqlcmd.txt`: salida local de preparacion de `CoopCoreDB` desde
   los scripts del repositorio.
 - `planes_linea_base_sqlcmd.txt`: salida local de `STATISTICS IO/TIME` antes
@@ -40,6 +44,21 @@ python .\scripts\render-optimization-plans.py
 
 La captura elimina y recrea cada indice dentro de una transaccion reversible;
 no deja cambios en los datos ni en la definicion final de la base.
+
+## Repetir las pruebas automatizadas finales
+
+Desde la raiz del repositorio, con SQL Server Express disponible en
+`.\SQLEXPRESS`:
+
+```powershell
+.\scripts\test-clean-install.ps1
+.\scripts\test-system-smoke.ps1
+```
+
+La primera prueba usa exclusivamente una base temporal llamada
+`CoopCoreCleanTestDB` y la elimina al terminar. La segunda inicia la API de
+forma local, valida autenticacion y autorizacion, ejecuta consultas reales y
+revierte la unica escritura de prueba.
 
 ## Convencion de nombres
 
