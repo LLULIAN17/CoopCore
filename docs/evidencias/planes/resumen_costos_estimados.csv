@@ -1,0 +1,6 @@
+﻿"Caso","Indice","CostoAntes","CostoDespues","DeltaCosto","DeltaPorcentaje","OperadoresAntes","OperadoresDespues","IndicesAntes","IndicesDespues"
+"movimientos","IX_Movimiento_Cuenta_Fecha","0,0146728","0,0032868","-0,0113860","-77,60","Sort, Clustered Index Scan","Top, Index Seek","PK_Movimiento","IX_Movimiento_Cuenta_Fecha"
+"cuentas_por_socio","IX_Cuenta_Socio_Saldo","0,00328942","0,0032842","-0,00000522","-0,16","Compute Scalar, Stream Aggregate, Clustered Index Scan","Compute Scalar, Stream Aggregate, Index Seek","PK_Cuenta","IX_Cuenta_Socio_Saldo"
+"prestamos_por_socio","IX_Prestamo_Socio_Saldo","0,00328942","0,0032842","-0,00000522","-0,16","Compute Scalar, Stream Aggregate, Clustered Index Scan","Compute Scalar, Stream Aggregate, Index Seek","PK_Prestamo","IX_Prestamo_Socio_Saldo"
+"cuotas_por_prestamo","IX_Cuota_Prestamo_Numero_Covering","0,00730559","0,0032864","-0,00401919","-55,02","Nested Loops, Index Seek, Clustered Index Seek","Index Seek","UQ_Cuota_Prestamo_Numero, PK_Cuota","IX_Cuota_Prestamo_Numero_Covering"
+"auditoria_por_accion","IX_Auditoria_Accion_Fecha","0,0147443","0,0033","-0,0114443","-77,62","Sort, Clustered Index Scan","Top, Index Seek","PK_Auditoria","IX_Auditoria_Accion_Fecha"

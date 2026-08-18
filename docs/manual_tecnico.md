@@ -1,5 +1,9 @@
 # Manual tecnico - CoopCore
 
+La version final consolidada, con diagrama ER, diccionario de datos completo y
+38 paginas verificadas, esta en `docs/CoopCore_Manual_Tecnico.pdf`. Este archivo
+Markdown se conserva como guia rapida editable.
+
 ## Arquitectura
 
 CoopCore usa SQL Server como nucleo de datos y logica de negocio. Las tablas,
@@ -23,18 +27,19 @@ explicitas implementadas.
 
 | Metrica | Valor |
 |---|---:|
-| Stored procedures reales | 18 |
+| Stored procedures requeridos por la linea base | 18 |
 | Minimo requerido para 80% | 15 |
-| Stored procedures completos | 18 |
+| Stored procedures reales actuales | 24 |
+| Stored procedures completos | 24 |
 | Cobertura actual | 100% |
-| Stored procedures con transacciones explicitas | 8 |
+| Stored procedures con transacciones explicitas | 10 |
 
 Calculo:
 
 ```text
 18 * 0.80 = 14.4
 Minimo requerido redondeado hacia arriba = 15
-Estado actual = 18/18 completos
+Estado actual = 24/24 completos
 ```
 
 ## Inventario de stored procedures
@@ -72,6 +77,17 @@ TRANSACTION` condicionado por `@@TRANCOUNT > 0` y `THROW`.
 | `coop.sp_AprobarPrestamo` | Cambia prestamo `SOLICITADO` a `ACTIVO`, asigna aprobador y actualiza fecha de desembolso. |
 | `coop.sp_RechazarPrestamo` | Cancela una solicitud con motivo obligatorio; usa estado `CANCELADO` porque el modelo no define `RECHAZADO`. |
 | `coop.sp_GenerarAmortizacion` | Genera cuotas para un prestamo `ACTIVO` sin cuotas previas y ajusta la ultima cuota por redondeo. |
+
+### Procedimientos de ampliacion funcional
+
+| SP | Responsabilidad |
+|---|---|
+| `coop.sp_BuscarClientesMorosos` | Busca y pagina socios con cartera vencida. |
+| `coop.sp_ConsultarDashboardCartera` | Resume cartera, mora y riesgo. |
+| `coop.sp_BuscarProductosFinancieros` | Consulta el catalogo y sus indicadores. |
+| `coop.sp_GuardarProductoFinanciero` | Crea o actualiza productos con transaccion. |
+| `coop.sp_ConsultarAlertasCobranza` | Prioriza cuotas vencidas o proximas. |
+| `coop.sp_RegistrarGestionCobranza` | Registra seguimiento y auditoria en transaccion. |
 
 ## Seguridad
 
@@ -169,15 +185,23 @@ SQL `coop_api_login`.
 1. `sql/00_create_database.sql`
 2. `sql/01_schema_tables.sql`
 3. `sql/02_seed_data.sql`
-4. `sql/03_views.sql`
-5. `sql/04_stored_procedures.sql`
-6. `sql/05_transactions.sql`
-7. `sql/06_security.sql`
-8. `sql/07_security_tests.sql`
-9. `sql/08_concurrency_tests.sql`
-10. `sql/09_execution_plan_baseline.sql`
-11. `sql/09_indexes_optimization.sql`
-12. `sql/10_revision3_tests.sql`
+4. `sql/03_functions.sql`
+5. `sql/03_views.sql`
+6. `sql/04_stored_procedures.sql`
+7. `sql/05_transactions.sql`
+8. `sql/06_security.sql`
+9. `sql/07_security_tests.sql`
+10. `sql/08_concurrency_tests.sql`
+11. `sql/09_execution_plan_baseline.sql`
+12. `sql/09_indexes_optimization.sql`
+13. `sql/10_revision3_tests.sql`
+14. `sql/11_busqueda_clientes_morosos.sql`
+15. `sql/12_busqueda_clientes_morosos_tests.sql`
+16. `sql/13_dashboard_cartera.sql`
+17. `sql/14_productos_financieros.sql`
+18. `sql/15_alertas_cobranza.sql`
+19. `sql/16_ampliacion_50_tests.sql`
+20. `sql/17_entrega_final_tests.sql`
 
 Para demostrar la Revision 3, ejecutar especialmente los scripts `00` a `06`
 y luego `10_revision3_tests.sql`.
@@ -222,7 +246,7 @@ EXEC coop.sp_RegistrarTransferencia
 
 - `sql/05_transactions.sql` no contiene `THROW 52099`.
 - `sql/05_transactions.sql` no contiene comentarios de `VERSION INICIAL`.
-- Los 8 SPs transaccionales contienen `BEGIN TRANSACTION`, `COMMIT
+- Los 10 SPs transaccionales contienen `BEGIN TRANSACTION`, `COMMIT
   TRANSACTION` y `ROLLBACK TRANSACTION`.
 - `sql/06_security.sql` concede `GRANT EXECUTE` de los SPs transaccionales a
   los roles internos correspondientes.

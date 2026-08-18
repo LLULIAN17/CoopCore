@@ -1,0 +1,30 @@
+COOPCORE - EVIDENCIA DE SISTEMA COMPLETO
+Fecha: 2026-08-17
+API: http://127.0.0.1:5068
+SQL Server: .\SQLEXPRESS / CoopCoreDB
+Conexion usada: autenticacion integrada de Windows, cifrada y con certificado local confiable.
+Los tokens JWT no se escriben en esta evidencia.
+
+[OK] Healthcheck | GET /api/health | esperado=200 obtenido=200
+[OK] Login cajero | POST /api/auth/login | esperado=200 obtenido=200
+[OK] Login oficial | POST /api/auth/login | esperado=200 obtenido=200
+[OK] Login auditor | POST /api/auth/login | esperado=200 obtenido=200
+[OK] Login admin | POST /api/auth/login | esperado=200 obtenido=200
+[OK] Consulta de socio | GET /api/socios/SO-1001 | esperado=200 obtenido=200
+[OK] Consulta de saldo | GET /api/cuentas/CTA-10001/saldo | esperado=200 obtenido=200
+[OK] Consulta de movimientos | GET /api/cuentas/CTA-10001/movimientos | esperado=200 obtenido=200
+[OK] Consulta de prestamo | GET /api/prestamos/PR-20001 | esperado=200 obtenido=200
+[OK] Busqueda de morosos | GET /api/clientes-morosos?fechaCorte=2026-02-01&diasMoraMinimos=1&pagina=1&tamanoPagina=20 | esperado=200 obtenido=200
+[OK] Dashboard de cartera | GET /api/cartera/dashboard?fechaCorte=2026-02-01 | esperado=200 obtenido=200
+[OK] Productos financieros | GET /api/productos-financieros?estado=ACTIVO | esperado=200 obtenido=200
+[OK] Alertas de cobranza | GET /api/cobranza/alertas?fechaCorte=2026-02-01&diasProximos=30 | esperado=200 obtenido=200
+[OK] Auditoria por rol auditor | GET /api/auditoria?entidad=EMPLEADO | esperado=200 obtenido=200
+[OK] Sin token | GET /api/cuentas/CTA-10001/saldo | esperado=401 obtenido=401
+[OK] Rol insuficiente | GET /api/auditoria | esperado=403 obtenido=403
+[OK] Validacion decimal invariante | POST /api/productos-financieros | esperado=400 obtenido=400
+[OK] Escritura real de cobranza | POST /api/cobranza/gestiones | esperado=201 obtenido=201
+[OK] Escritura confirmada en SQL Server | GestionCobranzaID=3
+[OK] Limpieza de escritura smoke | gestion y auditoria eliminadas
+
+RESULTADO FINAL: APROBADO
+Health, 4 logins, 9 lecturas, 3 casos negativos y 1 escritura real funcionaron.

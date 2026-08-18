@@ -12,6 +12,11 @@ Este documento registra la **linea base previa a cualquier optimizacion**.
 Antes de crear indices, cambiar consultas o ajustar stored procedures, se debe
 ejecutar `sql/09_execution_plan_baseline.sql` en SSMS y guardar las evidencias.
 
+La comparacion final ya fue completada y esta documentada con cifras en
+`docs/optimizacion_indices.md`. Los planes XML antes/despues estan en
+`docs/evidencias/planes/` y se regeneran con
+`scripts/capture-optimization-evidence.ps1`.
+
 ## Estado antes de optimizar
 
 - `sql/09_indexes_optimization.sql` se mantiene sin indices nuevos.
