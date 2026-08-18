@@ -23,10 +23,30 @@ END;
 GO
 
 /* ============================================================
+   Funcion: coop.fn_ObtenerTasaMoraDiaria
+   Descripcion: Define la tasa de mora diaria institucional en un solo lugar.
+   Parametros: ninguno.
+   Retorno: tasa diaria aplicada a las cuotas vencidas.
+   Nota: WITH SCHEMABINDING permite que el motor la inserte en linea (inlining).
+   Autor: Equipo CoopCore
+   Fecha: 2026-08-17
+   ============================================================ */
+CREATE OR ALTER FUNCTION coop.fn_ObtenerTasaMoraDiaria()
+RETURNS DECIMAL(9,6)
+WITH SCHEMABINDING
+AS
+BEGIN
+    RETURN CONVERT(DECIMAL(9,6), 0.001);
+END;
+GO
+
+/* ============================================================
    Funcion: coop.fn_CalcularMoraCuota
    Descripcion: Calcula la mora simple estimada de una cuota vencida.
    Parametros: monto, monto pagado, vencimiento, fecha de corte y tasa diaria.
    Retorno: mora estimada redondeada a dos decimales; cero si no hay atraso.
+   Nota: WITH SCHEMABINDING permite que el motor la inserte en linea (inlining)
+         y evita la evaluacion fila por fila dentro de los CROSS APPLY.
    Autor: Equipo CoopCore
    Fecha: 2026-08-17
    ============================================================ */
@@ -39,6 +59,7 @@ CREATE OR ALTER FUNCTION coop.fn_CalcularMoraCuota
     @TasaMoraDiaria DECIMAL(9,6)
 )
 RETURNS DECIMAL(18,2)
+WITH SCHEMABINDING
 AS
 BEGIN
     DECLARE @MontoPendiente DECIMAL(18,2) =
@@ -99,7 +120,7 @@ RETURN
             c.MontoPagado,
             c.FechaVencimiento,
             @FechaCorte,
-            CONVERT(DECIMAL(9,6), 0.001)
+            coop.fn_ObtenerTasaMoraDiaria()
         ) AS MoraEstimada
     FROM coop.Cuota AS c
     WHERE c.PrestamoID = @PrestamoID

@@ -13,11 +13,17 @@ SET NOCOUNT ON;
 SET XACT_ABORT ON;
 GO
 
-PRINT N'Prueba 1 - Existen las dos funciones requeridas';
+PRINT N'Prueba 1 - Existen las funciones requeridas';
 IF OBJECT_ID(N'coop.fn_CalcularMoraCuota', N'FN') IS NULL
     THROW 52400, 'No existe coop.fn_CalcularMoraCuota.', 1;
 IF OBJECT_ID(N'coop.fn_ObtenerCuotasVencidas', N'IF') IS NULL
     THROW 52401, 'No existe coop.fn_ObtenerCuotasVencidas.', 1;
+IF OBJECT_ID(N'coop.fn_ObtenerTasaMoraDiaria', N'FN') IS NULL
+    THROW 52411, 'No existe coop.fn_ObtenerTasaMoraDiaria.', 1;
+IF OBJECTPROPERTY(OBJECT_ID(N'coop.fn_CalcularMoraCuota'), 'IsSchemaBound') = 0
+    THROW 52412, 'coop.fn_CalcularMoraCuota debe declararse WITH SCHEMABINDING.', 1;
+IF OBJECTPROPERTY(OBJECT_ID(N'coop.fn_ObtenerTasaMoraDiaria'), 'IsSchemaBound') = 0
+    THROW 52413, 'coop.fn_ObtenerTasaMoraDiaria debe declararse WITH SCHEMABINDING.', 1;
 GO
 
 PRINT N'Prueba 2 - Calculo escalar de mora';
@@ -35,9 +41,16 @@ SELECT @Mora AS MoraCalculada, CONVERT(DECIMAL(18,2), 8.00) AS MoraEsperada;
 GO
 
 PRINT N'Prueba 3 - Funcion tabular de cuotas vencidas';
-DECLARE @PrestamoIDPrueba INT = (SELECT TOP (1) PrestamoID FROM coop.Cuota ORDER BY PrestamoID);
+DECLARE @PrestamoIDPrueba INT =
+(
+    SELECT TOP (1) c.PrestamoID
+    FROM coop.Cuota AS c
+    WHERE c.EstadoCuota <> N'PAGADA'
+      AND c.MontoPagado < c.MontoCuota
+    ORDER BY c.PrestamoID
+);
 IF @PrestamoIDPrueba IS NULL
-    THROW 52403, 'No existen cuotas de seed para probar la funcion tabular.', 1;
+    THROW 52403, 'No existen cuotas pendientes de seed para probar la funcion tabular.', 1;
 IF NOT EXISTS
 (
     SELECT 1
@@ -59,6 +72,9 @@ IF OBJECT_DEFINITION(OBJECT_ID(N'coop.sp_BuscarClientesMorosos'))
 IF OBJECT_DEFINITION(OBJECT_ID(N'coop.sp_ConsultarDashboardCartera'))
    NOT LIKE N'%fn_ObtenerCuotasVencidas%'
     THROW 52407, 'sp_ConsultarDashboardCartera no usa fn_ObtenerCuotasVencidas.', 1;
+IF OBJECT_DEFINITION(OBJECT_ID(N'coop.sp_ConsultarAlertasCobranza'))
+   NOT LIKE N'%fn_ObtenerTasaMoraDiaria%'
+    THROW 52414, 'sp_ConsultarAlertasCobranza no usa fn_ObtenerTasaMoraDiaria.', 1;
 GO
 
 PRINT N'Prueba 5 - OUTPUT en deposito (transaccion reversible)';

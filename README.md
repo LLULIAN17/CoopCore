@@ -43,6 +43,8 @@ almacenados. La API mantiene un rol delgado: solicitar operaciones a la BD.
 
 ## Cumplimiento SQL de entrega final
 
+- `coop.fn_ObtenerTasaMoraDiaria` define la tasa de mora diaria en un unico
+  lugar; ninguna consulta la escribe como literal.
 - `coop.fn_CalcularMoraCuota` centraliza el calculo de mora estimada y se usa
   desde `coop.sp_ConsultarAlertasCobranza`.
 - `coop.fn_ObtenerCuotasVencidas` devuelve una tabla reutilizable y se usa
@@ -51,6 +53,8 @@ almacenados. La API mantiene un rol delgado: solicitar operaciones a la BD.
 - `coop.sp_RegistrarDeposito`, `coop.sp_RegistrarTransferencia` y
   `coop.sp_SolicitarPrestamo` exponen parametros `OUTPUT` opcionales sin romper
   los result sets consumidos por la API.
+- Las funciones escalares se declaran `WITH SCHEMABINDING` para permitir el
+  inlining del motor y evitar evaluacion fila por fila en los `CROSS APPLY`.
 - Los 24 stored procedures incluyen autor, fecha y `SET NOCOUNT ON`.
 
 ## Nota sobre credenciales

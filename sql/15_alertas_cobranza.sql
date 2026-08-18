@@ -116,7 +116,7 @@ BEGIN
             c.MontoPagado,
             c.FechaVencimiento,
             @FechaCorte,
-            CONVERT(DECIMAL(9,6), 0.001)
+            coop.fn_ObtenerTasaMoraDiaria()
         ) AS MoraEstimada,
         ug.FechaGestion AS UltimaGestionFecha,
         ug.TipoGestion AS UltimaGestionTipo,
