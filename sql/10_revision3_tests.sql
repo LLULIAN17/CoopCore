@@ -14,10 +14,12 @@
   06_security.sql
 
   Nota:
-  Estas pruebas modifican saldos, registran movimientos, crean prestamos de
-  prueba, generan cuotas y escriben auditoria. Los prestamos nuevos usan el
-  numero generado por coop.sp_SolicitarPrestamo, por lo que el script puede
-  repetirse sin chocar con numeros existentes.
+  Las pruebas 1 a 7 se ejecutan dentro de una transaccion explicita que se
+  revierte al final. Ejercitan de verdad los SPs transaccionales (saldos,
+  movimientos, prestamos, cuotas y auditoria) y la evidencia de las pruebas
+  6 y 7 sigue siendo visible, porque esas lecturas ocurren dentro de la
+  misma transaccion. Al terminar, la base queda exactamente como estaba:
+  el script es repetible y no desplaza los datos del seed.
 */
 
 IF DB_ID(N'CoopCoreDB') IS NULL
@@ -83,6 +85,33 @@ SELECT
 FROM sys.procedures
 WHERE schema_id = SCHEMA_ID(N'coop')
 ORDER BY name;
+GO
+
+/* ------------------------------------------------------------
+   Linea base tomada FUERA de la transaccion, para poder comprobar
+   al final que la reversion dejo la base intacta.
+   ------------------------------------------------------------ */
+SET XACT_ABORT ON;
+GO
+
+IF OBJECT_ID(N'tempdb..#Revision3Baseline') IS NOT NULL
+    DROP TABLE #Revision3Baseline;
+CREATE TABLE #Revision3Baseline
+(
+    Movimientos INT NOT NULL,
+    Prestamos INT NOT NULL,
+    Cuotas INT NOT NULL,
+    SaldoTotal DECIMAL(38,2) NULL
+);
+INSERT INTO #Revision3Baseline (Movimientos, Prestamos, Cuotas, SaldoTotal)
+SELECT
+    (SELECT COUNT(*) FROM coop.Movimiento),
+    (SELECT COUNT(*) FROM coop.Prestamo),
+    (SELECT COUNT(*) FROM coop.Cuota),
+    (SELECT SUM(Saldo) FROM coop.Cuenta);
+GO
+
+BEGIN TRANSACTION Revision3Pruebas;
 GO
 
 PRINT N'Prueba 1 - Registrar deposito';
@@ -224,4 +253,24 @@ FROM coop.Auditoria AS a
 LEFT JOIN coop.Empleado AS e
     ON e.EmpleadoID = a.EmpleadoID
 ORDER BY a.AuditoriaID DESC;
+GO
+
+PRINT N'Cierre - Reversion de las pruebas transaccionales';
+IF @@TRANCOUNT > 0
+    ROLLBACK TRANSACTION;
+GO
+
+IF EXISTS
+(
+    SELECT 1
+    FROM #Revision3Baseline AS b
+    WHERE b.Movimientos <> (SELECT COUNT(*) FROM coop.Movimiento)
+       OR b.Prestamos <> (SELECT COUNT(*) FROM coop.Prestamo)
+       OR b.Cuotas <> (SELECT COUNT(*) FROM coop.Cuota)
+       OR ISNULL(b.SaldoTotal, -1) <> ISNULL((SELECT SUM(Saldo) FROM coop.Cuenta), -1)
+)
+    THROW 52300, 'Las pruebas de Revision 3 dejaron datos residuales.', 1;
+
+DROP TABLE #Revision3Baseline;
+PRINT N'Pruebas de Revision 3 completadas y revertidas. La base quedo igual que antes.';
 GO
